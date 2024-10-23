@@ -33,14 +33,17 @@ def handle_citations():
 def reorder_citations():
     try:
         data = request.json
-        for item in data:
-            citation = Citation.query.get(item['id'])
-            if citation:
-                citation.order = item['order']
+        citation_dict = {item['id']: item['order'] for item in data}
+        
+        citations = Citation.query.filter(Citation.id.in_(citation_dict.keys())).all()
+        for citation in citations:
+            citation.order = citation_dict[citation.id]
+        
         db.session.commit()
         return jsonify({"message": "Citations reordered successfully"}), 200
     except Exception as e:
         app.logger.error(f"Error reordering citations: {str(e)}")
+        db.session.rollback()
         return jsonify({"error": "Failed to reorder citations"}), 500
 
 @app.route('/api/citations', methods=['GET'])
@@ -86,7 +89,7 @@ def add_citation():
             # Remove retrieval_date if it's empty or not present
             data.pop('retrieval_date', None)
 
-        # Create a new Citation object
+        max_order = db.session.query(db.func.max(Citation.order)).scalar() or 0
         new_citation = Citation(
             type=data['type'],
             title=data.get('title'),
@@ -114,7 +117,7 @@ def add_citation():
             place=data.get('place'),
             pinpoint=data.get('pinpoint'),
             short_title=data.get('short_title'),
-            order=data.get('order')
+            order=max_order + 1
         )
 
         # Format the citation using AGLC4Citation
