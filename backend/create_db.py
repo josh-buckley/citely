@@ -1,75 +1,100 @@
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models import db, Citation, Project, Tag, citation_tags
+from datetime import date, timedelta
+import random
+import uuid
 from app import app
-from extensions import db
-from models import Citation
-from datetime import date
 
-with app.app_context():
-    db.create_all()
-    
-    # Add some sample data
-    sample_citations = [
-        Citation(
-            order=1,
-            type='case_reported',
-            title='Donoghue v Stevenson',
-            case_name='Donoghue v Stevenson',
-            year=1932,
-            court='House of Lords',
-            url='https://www.bailii.org/uk/cases/UKHL/1932/100.html',
-            notes='Established the modern concept of negligence in tort law, introducing the "neighbour principle". The case involved a decomposed snail in a bottle of ginger beer.',
-            formatted_citation='Donoghue v Stevenson (1932) AC 562',
-            judge='Lord Atkin'
-        ),
-        Citation(
-            order=2,
-            type='journal_article',
-            title='The Rule of Law and Its Virtue',
-            authors='Joseph Raz',
-            year=1977,
-            journal='Law Quarterly Review',
-            volume='93',
-            starting_page=195,
-            url='https://example.com/raz-rule-of-law',
-            notes='A seminal article on the concept of the rule of law.',
-            formatted_citation='Joseph Raz, \'The Rule of Law and Its Virtue\' (1977) 93 Law Quarterly Review 195'
-        ),
-        Citation(
-            order=3,
-            type='legislation',
-            title='Human Rights Act',
-            year=1998,
-            jurisdiction='UK',
-            url='https://www.legislation.gov.uk/ukpga/1998/42/contents',
-            notes='An Act to give further effect to rights and freedoms guaranteed under the European Convention on Human Rights.',
-            formatted_citation='Human Rights Act 1998 (UK)'
-        ),
-        Citation(
-            order=4,
-            type='book',
-            title='The Concept of Law',
-            authors='H.L.A. Hart',
-            year=1961,
-            publisher='Oxford University Press',
-            edition='1st',
-            url='https://example.com/concept-of-law',
-            notes='A seminal work in legal philosophy.',
-            formatted_citation='H.L.A. Hart, The Concept of Law (Oxford University Press, 1st ed, 1961)'
-        ),
-        Citation(
-            order=5,
-            type='internet_materials_author',
-            title='The Rule of Law',
-            authors='Tom Bingham',
-            year=2010,
-            web_page_title='Centre for Public Law',
-            url='https://www.cpl.law.cam.ac.uk/sir-david-williams-lectures2006-rule-law',
-            retrieval_date=date(2023, 5, 1),
-            notes='A lecture on the rule of law by Lord Bingham.',
-            formatted_citation='Tom Bingham, \'The Rule of Law\' (Centre for Public Law, 2010) <https://www.cpl.law.cam.ac.uk/sir-david-williams-lectures2006-rule-law>'
-        )
-    ]
-    
-    db.session.add_all(sample_citations)
-    db.session.commit()
+# Database connection
+SQLALCHEMY_DATABASE_URL = "sqlite:///./citations.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-print("Database created and sample data added.")
+def init_db():
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+
+def create_sample_data():
+    with app.app_context():
+        # Create tags
+        tags = [
+            Tag(name='Criminal Law', color='#FF5733'),
+            Tag(name='Civil Law', color='#33FF57'),
+            Tag(name='Constitutional Law', color='#3357FF'),
+            Tag(name='Contract Law', color='#FF33F1'),
+            Tag(name='Tort Law', color='#33FFF1')
+        ]
+        db.session.add_all(tags)
+
+        # Create projects
+        projects = [
+            Project(
+                id=str(uuid.uuid4()),
+                title='Criminal Law Research',
+                description='Research on recent developments in criminal law',
+                status='In Progress',
+                deadline=date.today() + timedelta(days=30)
+            ),
+            Project(
+                id=str(uuid.uuid4()),
+                title='Contract Law Analysis',
+                description='Analysis of key contract law cases',
+                status='Not Started',
+                deadline=date.today() + timedelta(days=60)
+            )
+        ]
+        db.session.add_all(projects)
+
+        # Create sample citations
+        sample_citations = [
+            Citation(
+                id=str(uuid.uuid4()),
+                order=1,
+                type='case_reported',
+                title='Donoghue v Stevenson',
+                year=1932,
+                case_name='Donoghue v Stevenson',
+                court='House of Lords',
+                judge='Lord Atkin',
+                url='https://www.bailii.org/uk/cases/UKHL/1932/100.html',
+                notes='Established the modern concept of negligence in tort law, introducing the "neighbour principle".',
+                formatted_citation='Donoghue v Stevenson [1932] AC 562',
+                project_id=projects[0].id
+            ),
+            Citation(
+                id=str(uuid.uuid4()),
+                order=2,
+                type='journal_article',
+                title='The Rule of Law and Its Virtue',
+                authors=['Joseph Raz'],
+                year=1977,
+                journal='Law Quarterly Review',
+                volume='93',
+                starting_page=195,
+                url='https://example.com/raz-rule-of-law',
+                notes='A seminal article on the concept of the rule of law.',
+                formatted_citation='Joseph Raz, \'The Rule of Law and Its Virtue\' (1977) 93 Law Quarterly Review 195',
+                project_id=projects[0].id
+            ),
+        ]
+
+        db.session.add_all(sample_citations)
+
+        # Assign tags to citations
+        sample_citations[0].tags.extend([tags[0], tags[2]])  # Criminal Law and Constitutional Law
+        sample_citations[1].tags.extend([tags[2], tags[3]])  # Constitutional Law and Contract Law
+
+        try:
+            db.session.commit()
+            print("Sample data created successfully.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating sample data: {str(e)}")
+            raise
+
+if __name__ == "__main__":
+    init_db()
+    create_sample_data()
+    print("Database setup complete.")

@@ -1,0 +1,29 @@
+# Python virtual environment
+backend/venv/
+__pycache__/
+*.py[cod]
+*.class
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# SQLAlchemy
+*.cpython-*.so
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# System files
+.DS_Store
+Thumbs.db

@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from extensions import db
-from models import Citation, Tag
+from models import Citation, Tag, Project
 from dotenv import load_dotenv
 from formatcitation import AGLC4Citation
 import os
@@ -49,25 +49,32 @@ def reorder_citations():
 @app.route('/api/citations', methods=['GET'])
 def get_citations():
     try:
-        with app.app_context():
+        project_id = request.args.get('projectId')
+        
+        # Filter citations by project_id if provided
+        if project_id:
+            citations = Citation.query.filter_by(project_id=project_id).order_by(Citation.order).all()
+        else:
             citations = Citation.query.order_by(Citation.order).all()
-            app.logger.info(f"Retrieved {len(citations)} citations from database")
-            
-            if not citations:
-                app.logger.warning("No citations found in the database.")
-                return jsonify([]), 200
-            
-            citation_list = [citation.to_dict() for citation in citations]
-            
-            for citation in citation_list:
-                if 'authors' in citation and not isinstance(citation['authors'], list):
-                    citation['authors'] = [citation['authors']] if citation['authors'] else []
-                if 'editors' in citation and not isinstance(citation['editors'], list):
-                    citation['editors'] = [citation['editors']] if citation['editors'] else []
-            
-            app.logger.info(f"Successfully processed {len(citation_list)} citations.")
-            app.logger.debug(f"Returning citations: {citation_list}")
-            return jsonify(citation_list), 200
+
+        app.logger.info(f"Retrieved {len(citations)} citations from database")
+        
+        if not citations:
+            app.logger.warning("No citations found in the database.")
+            return jsonify([]), 200
+        
+        citation_list = [citation.to_dict() for citation in citations]
+        
+        # Ensure authors and editors are lists
+        for citation in citation_list:
+            if 'authors' in citation and not isinstance(citation['authors'], list):
+                citation['authors'] = [citation['authors']] if citation['authors'] else []
+            if 'editors' in citation and not isinstance(citation['editors'], list):
+                citation['editors'] = [citation['editors']] if citation['editors'] else []
+        
+        app.logger.info(f"Successfully processed {len(citation_list)} citations.")
+        app.logger.debug(f"Returning citations: {citation_list}")
+        return jsonify(citation_list), 200
     except Exception as e:
         app.logger.error(f"Error fetching citations: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to fetch citations", "details": str(e)}), 500
@@ -101,13 +108,13 @@ def add_citation():
             judge=data.get('judge'),
             jurisdiction=data.get('jurisdiction'),
             authors=data.get('authors'),
+            editors=data.get('editors'),  # Add this line
             journal=data.get('journal'),
             volume=data.get('volume'),
             issue=data.get('issue'),
             starting_page=data.get('starting_page'),
             publisher=data.get('publisher'),
             edition=data.get('edition'),
-            editors=data.get('editors'),
             document_type=data.get('document_type'),
             series_no=data.get('series_no'),
             document_number=data.get('document_number'),
@@ -117,7 +124,9 @@ def add_citation():
             place=data.get('place'),
             pinpoint=data.get('pinpoint'),
             short_title=data.get('short_title'),
-            order=max_order + 1
+            order=max_order + 1,
+            project_id=data['projectId'],
+            law_report_series=data.get('law_report_series'),
         )
 
         # Format the citation using AGLC4Citation
@@ -153,7 +162,20 @@ def update_citation(citation_id):
 
         # Update citation fields
         for key, value in data.items():
-            setattr(citation, key, value)
+            if hasattr(citation, key):
+                if key == 'tags':
+                    # Handle tags separately
+                    citation.tags = []
+                    for tag_data in value:
+                        tag = Tag.query.filter_by(name=tag_data['name']).first()
+                        if not tag:
+                            tag = Tag(name=tag_data['name'], color=tag_data['color'])
+                        citation.tags.append(tag)
+                elif key == 'notes':
+                    # Set notes to None if it's an empty string or null
+                    citation.notes = value if value else None
+                else:
+                    setattr(citation, key, value)
 
         # Format the updated citation
         try:
@@ -170,9 +192,9 @@ def update_citation(citation_id):
         db.session.commit()
         return jsonify(citation.to_dict()), 200
     except Exception as e:
-        app.logger.error(f"Error updating citation: {str(e)}")
+        app.logger.error(f"Error updating citation: {str(e)}", exc_info=True)
         db.session.rollback()
-        return jsonify({"error": "Failed to update citation"}), 500
+        return jsonify({"error": f"Failed to update citation: {str(e)}"}), 500
 
 @app.route('/api/citations/<string:citation_id>', methods=['DELETE'])
 def delete_citation(citation_id):
@@ -189,22 +211,44 @@ def delete_citation(citation_id):
         db.session.rollback()
         return jsonify({"error": "Failed to delete citation"}), 500
 
-@app.route('/api/citations/<int:citation_id>/tags', methods=['POST'])
-def add_tag(citation_id):
+@app.route('/api/citations/<string:citation_id>/tags', methods=['POST'])
+def add_tag_to_citation(citation_id):
     try:
         data = request.json
+        tag_name = data.get('name')
+        tag_color = data.get('color')
+
+        if not tag_name or not tag_color:
+            return jsonify({"error": "Tag name and color are required"}), 400
+
         citation = Citation.query.get(citation_id)
         if not citation:
             return jsonify({"error": "Citation not found"}), 404
 
-        new_tag = Tag(name=data['name'], color=data['color'], citation_id=citation_id)
-        db.session.add(new_tag)
+        # Check if a tag with this name already exists
+        existing_tag = Tag.query.filter_by(name=tag_name).first()
+        if existing_tag:
+            # If the tag exists, use it
+            tag = existing_tag
+            # Update the color if it's different
+            if tag.color != tag_color:
+                tag.color = tag_color
+        else:
+            # If the tag doesn't exist, create a new one
+            tag = Tag(name=tag_name, color=tag_color)
+            db.session.add(tag)
+
+        # Add the tag to the citation if it's not already there
+        if tag not in citation.tags:
+            citation.tags.append(tag)
+
         db.session.commit()
 
-        return jsonify({"id": new_tag.id, "name": new_tag.name, "color": new_tag.color}), 201
+        return jsonify(tag.to_dict()), 201
     except Exception as e:
+        app.logger.error(f"Error adding tag to citation: {str(e)}")
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to add tag to citation"}), 500
 
 @app.route('/api/tags/<int:tag_id>', methods=['PUT'])
 def update_tag(tag_id):
@@ -216,6 +260,15 @@ def update_tag(tag_id):
 
         tag.name = data.get('name', tag.name)
         tag.color = data.get('color', tag.color)
+
+        # Update all citations that use this tag
+        citations = Citation.query.filter(Citation.tags.any(id=tag_id)).all()
+        for citation in citations:
+            for citation_tag in citation.tags:
+                if citation_tag.id == tag_id:
+                    citation_tag.name = tag.name
+                    citation_tag.color = tag.color
+
         db.session.commit()
 
         return jsonify({"id": tag.id, "name": tag.name, "color": tag.color}), 200
@@ -237,6 +290,159 @@ def delete_tag(tag_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/projects', methods=['GET'])
+def get_projects():
+    try:
+        projects = Project.query.all()
+        app.logger.info(f"Fetched {len(projects)} projects")
+        project_list = [project.to_dict() for project in projects]
+        app.logger.info(f"Project list: {project_list}")
+        return jsonify(project_list), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching projects: {str(e)}")
+        return jsonify({"error": "Failed to fetch projects"}), 500
+
+@app.route('/api/projects', methods=['POST'])
+def create_project():
+    try:
+        data = request.json
+        app.logger.info(f"Received project data: {data}")
+
+        # Validate required fields
+        if 'title' not in data:
+            return jsonify({"error": "Title is required"}), 400
+        if 'status' not in data:
+            return jsonify({"error": "Status is required"}), 400
+
+        # Convert deadline to date object if provided
+        deadline = None
+        if 'deadline' in data and data['deadline']:
+            try:
+                deadline = datetime.fromisoformat(data['deadline'].split('T')[0]).date()
+            except ValueError:
+                return jsonify({"error": "Invalid date format for deadline. Use YYYY-MM-DD."}), 400
+
+        new_project = Project(
+            title=data['title'],
+            description=data.get('description', ''),
+            status=data['status'],
+            deadline=deadline
+        )
+        db.session.add(new_project)
+        db.session.commit()
+
+        app.logger.info(f"Created new project: {new_project.to_dict()}")
+        return jsonify(new_project.to_dict()), 201
+    except Exception as e:
+        app.logger.error(f"Error creating project: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return jsonify({"error": f"Failed to create project: {str(e)}"}), 500
+
+@app.route('/api/projects/<string:project_id>', methods=['PUT'])
+def update_project(project_id):
+    try:
+        project = Project.query.get(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+        
+        data = request.json
+        project.title = data.get('title', project.title)
+        project.description = data.get('description', project.description)
+        project.status = data.get('status', project.status)
+        if 'deadline' in data:
+            if data['deadline']:
+                project.deadline = datetime.fromisoformat(data['deadline'].split('T')[0]).date()
+            else:
+                project.deadline = None
+        
+        db.session.commit()
+        return jsonify(project.to_dict()), 200
+    except Exception as e:
+        app.logger.error(f"Error updating project: {str(e)}")
+        db.session.rollback()
+        return jsonify({"error": f"Failed to update project: {str(e)}"}), 500
+
+@app.route('/api/projects/<string:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    try:
+        project = Project.query.get(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+        
+        db.session.delete(project)
+        db.session.commit()
+        return jsonify({"message": "Project deleted successfully"}), 200
+    except Exception as e:
+        app.logger.error(f"Error deleting project: {str(e)}")
+        db.session.rollback()
+        return jsonify({"error": "Failed to delete project"}), 500
+
+@app.route('/api/projects/<string:project_id>/citations', methods=['POST'])
+def add_citation_to_project(project_id):
+    try:
+        project = Project.query.get(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+        
+        citation_data = request.json
+        citation = Citation.query.get(citation_data['id'])
+        if not citation:
+            return jsonify({"error": "Citation not found"}), 404
+        
+        project.citations.append(citation)
+        db.session.commit()
+        return jsonify(project.to_dict()), 200
+    except Exception as e:
+        app.logger.error(f"Error adding citation to project: {str(e)}")
+        db.session.rollback()
+        return jsonify({"error": "Failed to add citation to project"}), 500
+
+@app.route('/api/projects/<string:project_id>/citations/<string:citation_id>', methods=['DELETE'])
+def remove_citation_from_project(project_id, citation_id):
+    try:
+        project = Project.query.get(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+        
+        citation = Citation.query.get(citation_id)
+        if not citation:
+            return jsonify({"error": "Citation not found"}), 404
+        
+        project.citations.remove(citation)
+        db.session.commit()
+        return jsonify(project.to_dict()), 200
+    except Exception as e:
+        app.logger.error(f"Error removing citation from project: {str(e)}")
+        db.session.rollback()
+        return jsonify({"error": "Failed to remove citation from project"}), 500
+
+@app.route('/api/projects/citation-tags', methods=['GET'])
+def get_project_citation_tags():
+    try:
+        projects = Project.query.all()
+        project_citation_tags = {}
+        for project in projects:
+            project_citation_tags[project.id] = [
+                {"name": tag.name, "color": tag.color}
+                for citation in project.citations
+                for tag in citation.tags
+            ]
+        return jsonify(project_citation_tags), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching project citation tags: {str(e)}")
+        return jsonify({"error": "Failed to fetch project citation tags"}), 500
+
+@app.route('/api/projects/<string:project_id>', methods=['GET'])
+def get_project(project_id):
+    try:
+        project = Project.query.get(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+        return jsonify(project.to_dict()), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching project: {str(e)}")
+        return jsonify({"error": "Failed to fetch project"}), 500
 
 def init_db():
     with app.app_context():
