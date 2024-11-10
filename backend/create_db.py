@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import db, Citation, Project, Tag, citation_tags
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import random
 import uuid
 from app import app
@@ -20,11 +20,11 @@ def create_sample_data():
     with app.app_context():
         # Create tags
         tags = [
-            Tag(name='Criminal Law', color='#FF5733'),
-            Tag(name='Civil Law', color='#33FF57'),
-            Tag(name='Constitutional Law', color='#3357FF'),
-            Tag(name='Contract Law', color='#FF33F1'),
-            Tag(name='Tort Law', color='#33FFF1')
+            Tag(name='One Fish', color='#16697A'),
+            Tag(name='Two Fish', color='#489FB5'),
+            Tag(name='Red Fish', color='#82C0CC'),
+            Tag(name='Blue Fish', color='#B7B7A4'),
+            Tag(name='Yellow Fish', color='#f5dfbb')
         ]
         db.session.add_all(tags)
 
@@ -47,6 +47,8 @@ def create_sample_data():
         ]
         db.session.add_all(projects)
 
+        current_time = datetime.utcnow()
+        
         # Create sample citations
         sample_citations = [
             Citation(
@@ -61,7 +63,9 @@ def create_sample_data():
                 url='https://www.bailii.org/uk/cases/UKHL/1932/100.html',
                 notes='Established the modern concept of negligence in tort law, introducing the "neighbour principle".',
                 formatted_citation='Donoghue v Stevenson [1932] AC 562',
-                project_id=projects[0].id
+                project_id=projects[0].id,
+                created_at=current_time,
+                updated_at=current_time
             ),
             Citation(
                 id=str(uuid.uuid4()),
@@ -76,7 +80,9 @@ def create_sample_data():
                 url='https://example.com/raz-rule-of-law',
                 notes='A seminal article on the concept of the rule of law.',
                 formatted_citation='Joseph Raz, \'The Rule of Law and Its Virtue\' (1977) 93 Law Quarterly Review 195',
-                project_id=projects[0].id
+                project_id=projects[0].id,
+                created_at=current_time,
+                updated_at=current_time
             ),
         ]
 

@@ -19,6 +19,8 @@ class Citation(db.Model):
     type = Column(String(100), nullable=False)
     formatted_citation = Column(Text)
     order = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Common fields
     title = Column(String(255))
@@ -63,12 +65,74 @@ class Citation(db.Model):
     # Additional fields
     pinpoint = Column(String(50))
     short_title = Column(String(255))
+    
+    # New fields for judicial decisions
+    proceeding_number = Column(String(255))
+    judicial_officers = Column(String(255))
+    award_description = Column(String(255))
+    forum = Column(String(255))
+    case_award_number = Column(String(255))
+    party_name = Column(String(255))
+    submission_title = Column(String(255))
+    date_of_proceedings = Column(Date)
+    date_of_submission = Column(Date)
+    
+    # New fields for legislative materials
+    gazette_title = Column(String(255))
+    gazette_number = Column(String(100))
+    instrumentality_officer = Column(String(255))
+    instrument_title = Column(String(255))
+    practice_direction = Column(String(255))
+    identifier = Column(String(100))
+    chamber = Column(String(100))
+    date_of_debate = Column(Date)
+    name_of_speaker = Column(String(255))
+    
+    # New fields for secondary sources
+    chapter_title = Column(String(255))
+    book_title = Column(String(255))
+    translator = Column(String(255))
+    speech_type = Column(String(100))
+    institution = Column(String(255))
+    release_type = Column(String(100))
+    body = Column(String(255))
+    date_month_season = Column(String(100))
+    periodical_name = Column(String(255))
+    format = Column(String(100))
+    interviewee = Column(String(255))
+    interviewer = Column(String(255))
+    interview_forum = Column(String(255))
+    episode_title = Column(String(255))
+    film_series_title = Column(String(255))
+    version_details = Column(String(255))
+    studio_producer = Column(String(255))
+    
+    # New fields for miscellaneous materials
+    committee = Column(String(255))
+    legislature = Column(String(255))
+    location = Column(String(255))
+    jurisdiction_code = Column(String(50))
+    ip_type = Column(String(100))
+    additional_info = Column(Text)
+    identification_number = Column(String(100))
+    filing_date = Column(Date)
+    registration_status = Column(String(100))
+    registration_date = Column(Date)
+    company_name = Column(String(255))
+    correspondence_type = Column(String(100))
+    recipient = Column(String(255))
+    
+    # New fields for international materials
+    parties_names = Column(String(255))
+    treaty_series = Column(String(255))
+    date_opened = Column(Date)
+    date_in_force = Column(Date)
 
     project = relationship("Project", back_populates="citations")
     tags = relationship('Tag', secondary=citation_tags, back_populates='citations')
 
     def to_dict(self):
-        return {
+        base_dict = {
             'id': self.id,
             'order': self.order,
             'type': self.type,
@@ -100,8 +164,24 @@ class Citation(db.Model):
             'pinpoint': self.pinpoint,
             'short_title': self.short_title,
             'tags': [tag.to_dict() for tag in self.tags],  # Include tags,
-            'law_report_series': self.law_report_series
+            'law_report_series': self.law_report_series,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
         }
+        
+        # Handle date fields
+        date_fields = ['created_at', 'updated_at', 'retrieval_date', 'filing_date',
+                      'registration_date', 'date_opened', 'date_in_force',
+                      'date_of_proceedings', 'date_of_submission', 'date_of_debate']
+        
+        for field in date_fields:
+            value = getattr(self, field)
+            base_dict[field] = value.isoformat() if value else None
+            
+        # Add tags
+        base_dict['tags'] = [tag.to_dict() for tag in self.tags]
+        
+        return base_dict
 
 
 class Tag(db.Model):
