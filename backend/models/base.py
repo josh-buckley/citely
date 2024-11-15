@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from uuid import uuid4
 
 class TimestampedModel(BaseModel):
@@ -17,6 +17,12 @@ class Tag(BaseModel):
 
     class Config:
         from_attributes = True
+
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        if d.get('id'):
+            d['id'] = int(d['id'])
+        return d
 
 class Project(TimestampedModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
@@ -35,21 +41,40 @@ class Citation(TimestampedModel):
     
     # Common fields
     title: Optional[str] = None
-    year: Optional[int] = None
+    year: Optional[str] = None
     url: Optional[str] = None
     notes: Optional[str] = None
+    
+    # Date fields (all as strings now)
+    retrieval_date: Optional[str] = None
+    date_of_proceedings: Optional[str] = None
+    date_of_submission: Optional[str] = None
+    date_of_debate: Optional[str] = None
+    filing_date: Optional[str] = None
+    registration_date: Optional[str] = None
+    date_opened: Optional[str] = None
+    date_in_force: Optional[str] = None
+    full_date: Optional[str] = None
+    status_change_date: Optional[str] = None
+    signature_date: Optional[str] = None
+    entry_force_date: Optional[str] = None
     
     # Case fields
     case_name: Optional[str] = None
     court: Optional[str] = None
     judge: Optional[str] = None
     law_report_series: Optional[str] = None
+    unique_court_identifier: Optional[str] = None
+    judgment_number: Optional[str] = None
     
     # Legislation fields
     jurisdiction: Optional[str] = None
+    explanatory_type: Optional[str] = None
+    bill_citation: Optional[str] = None
+    title_of_notice: Optional[str] = None
     
     # Journal article fields
-    authors: Optional[List[Dict[str, Any]]] = None
+    authors: List[str] = []
     journal: Optional[str] = None
     volume: Optional[str] = None
     issue: Optional[str] = None
@@ -57,7 +82,7 @@ class Citation(TimestampedModel):
     
     # Book fields
     publisher: Optional[str] = None
-    editors: Optional[List[Dict[str, Any]]] = None
+    editors: List[str] = []
     edition: Optional[str] = None
     
     # Report fields
@@ -65,17 +90,48 @@ class Citation(TimestampedModel):
     series_no: Optional[str] = None
     document_number: Optional[str] = None
     
+    # Court documents
+    number_identifier: Optional[str] = None
+    citation_report_series: Optional[str] = None
+    
+    # Secondary sources
+    translation_title: Optional[str] = None
+    publication_year: Optional[str] = None
+    dictionary_title: Optional[str] = None
+    edition_number: Optional[str] = None
+    entry_title: Optional[str] = None
+    definition_number: Optional[str] = None
+    title_number: Optional[str] = None
+    title_name: Optional[str] = None
+    chapter_number: Optional[str] = None
+    chapter_name: Optional[str] = None
+    paragraph: Optional[str] = None
+    title_of_encyclopedia: Optional[str] = None
+    volume_number: Optional[str] = None
+    
     # Internet materials fields
     web_page_title: Optional[str] = None
-    retrieval_date: Optional[date] = None
     
-    # Newspaper fields
+    # Media-related fields
     newspaper: Optional[str] = None
     place: Optional[str] = None
+    place_of_publication: Optional[str] = None
+    medium: Optional[str] = None
+    director: Optional[str] = None
+    producer: Optional[str] = None
+    production_company: Optional[str] = None
+    timestamp: Optional[str] = None
+    platform: Optional[str] = None
+    post_content: Optional[str] = None
     
     # Additional fields
     pinpoint: Optional[str] = None
     short_title: Optional[str] = None
+    
+    # Interview fields
+    interviewee: Optional[str] = None
+    interviewer: Optional[str] = None
+    program: Optional[str] = None
     
     # Judicial decisions fields
     proceeding_number: Optional[str] = None
@@ -98,25 +154,7 @@ class Citation(TimestampedModel):
     chamber: Optional[str] = None
     date_of_debate: Optional[date] = None
     name_of_speaker: Optional[str] = None
-    
-    # Secondary sources fields
-    chapter_title: Optional[str] = None
-    book_title: Optional[str] = None
-    translator: Optional[str] = None
-    speech_type: Optional[str] = None
-    institution: Optional[str] = None
-    release_type: Optional[str] = None
-    body: Optional[str] = None
-    date_month_season: Optional[str] = None
-    periodical_name: Optional[str] = None
-    format: Optional[str] = None
-    interviewee: Optional[str] = None
-    interviewer: Optional[str] = None
-    interview_forum: Optional[str] = None
-    episode_title: Optional[str] = None
-    film_series_title: Optional[str] = None
-    version_details: Optional[str] = None
-    studio_producer: Optional[str] = None
+    issuing_body: Optional[str] = None
     
     # Miscellaneous materials fields
     committee: Optional[str] = None
@@ -132,33 +170,43 @@ class Citation(TimestampedModel):
     company_name: Optional[str] = None
     correspondence_type: Optional[str] = None
     recipient: Optional[str] = None
+    submission_number: Optional[str] = None
+    name_of_inquiry: Optional[str] = None
+    number: Optional[str] = None
+    status_change_date: Optional[date] = None
     
     # International materials fields
     parties_names: Optional[str] = None
     treaty_series: Optional[str] = None
+    treaty_title: Optional[str] = None
+    signature_date: Optional[date] = None
+    entry_force_date: Optional[date] = None
     date_opened: Optional[date] = None
     date_in_force: Optional[date] = None
     
+    # Research paper fields
+    paper_number: Optional[str] = None
+    
+    # Speech fields
+    speech_or_lecture: Optional[str] = None
+    institution_forum: Optional[str] = None
+    
     # Relationships
     tags: List[Tag] = Field(default_factory=list)
-    project: Optional[Project] = None
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == '':
+            return None
+        return v
 
     class Config:
         from_attributes = True
+        arbitrary_types_allowed = True
 
     def dict(self, *args, **kwargs):
-        # Custom dict method to handle date serialization
         d = super().dict(*args, **kwargs)
-        # Convert all date fields to ISO format
-        date_fields = [
-            'retrieval_date', 'date_of_proceedings', 'date_of_submission',
-            'date_of_debate', 'filing_date', 'registration_date',
-            'date_opened', 'date_in_force', 'created_at', 'updated_at'
-        ]
-        for field in date_fields:
-            if d.get(field):
-                if isinstance(d[field], (date, datetime)):
-                    d[field] = d[field].isoformat()
+        # Remove date conversion since we're storing as strings
         return d
 
 # Update forward references
