@@ -1396,168 +1396,154 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               )}
               <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
                 <div className="relative">
-                  <Table>
+                  <Table className="border-collapse border-spacing-0">
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="border-b hover:bg-transparent">
                         <TableHead className="w-[50px]"></TableHead>
-                        <TableHead className="w-[50%]">Formatted Citation</TableHead>
-                        <TableHead className="w-[20%]">Type</TableHead>
-                        <TableHead className="w-[30%]">Tags</TableHead>
-                        <TableHead></TableHead>
+                        <TableHead className="w-[50%] text-sm">Formatted Citation</TableHead>
+                        <TableHead className="w-[20%] text-sm">Type</TableHead>
+                        <TableHead className="w-[30%] text-sm">Tags</TableHead>
+                        <TableHead className="text-sm"></TableHead>
                       </TableRow>
                     </TableHeader>
-                  </Table>
-                  
-                  <Droppable 
-                    droppableId="citations-list"
-                    isDropDisabled={sortOrder !== 'Custom Sort'}
-                    isCombineEnabled={false}
-                    ignoreContainerClipping={true}
-                    type="citation"
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className={cn(
-                          "w-full",
-                          snapshot.isDraggingOver && "bg-accent/50"
-                        )}
-                      >
-                        <Table>
-                          <TableBody>
-                            {filteredCitations.map((citation, index) => (
-                              <Draggable
-                                key={citation.id}
-                                draggableId={citation.id}
-                                index={index}
-                                isDragDisabled={sortOrder !== 'Custom Sort'}
-                              >
-                                {(provided, snapshot) => (
-                                  <TableRow
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={cn(
-                                      "transition-colors",
-                                      snapshot.isDragging && "bg-accent",
-                                      isDragging && !snapshot.isDragging && "opacity-50"
-                                    )}
-                                  >
-                                    <TableCell>
-                                      <div 
-                                        {...provided.dragHandleProps}
-                                        className={cn(
-                                          "cursor-grab active:cursor-grabbing",
-                                          sortOrder !== 'Custom Sort' && "cursor-not-allowed opacity-50"
-                                        )}
+                    <Droppable 
+                      droppableId="citations-list"
+                      direction="vertical"
+                      isDropDisabled={sortOrder !== 'Custom Sort'}
+                      isCombineEnabled={false}
+                      ignoreContainerClipping={true}
+                      type="citation"
+                    >
+                      {(provided) => (
+                        <TableBody
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className="text-sm"
+                        >
+                          {filteredCitations.map((citation, index) => (
+                            <Draggable
+                              key={citation.id}
+                              draggableId={citation.id}
+                              index={index}
+                            >
+                              {(provided, snapshot) => (
+                                <TableRow
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={cn(
+                                    "border-b transition-colors bg-white",
+                                    snapshot.isDragging ? "bg-muted/50" : "",
+                                    "hover:bg-muted/50"
+                                  )}
+                                >
+                                  <TableCell className="w-[30px] pl-4 py-2">
+                                    <div {...provided.dragHandleProps}>
+                                      <GripVertical className="h-4 w-4" />
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="w-[50%] py-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="mr-2">{renderFormattedCitation(citation.formatted_citation ?? '')}</span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCopyClick(citation.id)}
+                                        className={copiedStates[citation.id] ? 'text-gray-400' : ''}
                                       >
-                                        <GripVertical className="h-4 w-4" />
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="w-[50%]">
-                                      <div className="flex items-center justify-between">
-                                        <span className="mr-2">{renderFormattedCitation(citation.formatted_citation ?? '')}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopyClick(citation.id)}
-                                          className={copiedStates[citation.id] ? 'text-gray-400' : ''}
-                                        >
-                                          {copiedStates[citation.id] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="w-[20%] font-medium">
-                                      {getFriendlyTypeName(citation.type)}
-                                    </TableCell>
-                                    <TableCell className="w-[30%]">
-                                      <div className="flex flex-wrap gap-1 items-center">
-                                        {citation.tags && citation.tags.map((tag) => (
-                                          <div key={tag.id} className="relative inline-block">
-                                            <Badge
-                                              variant="outline"
-                                              className="cursor-pointer"
-                                              style={{ backgroundColor: tag.color }}
-                                              onClick={() => setEditingTagId({ citationId: citation.id, tagId: tag.id })}
-                                            >
-                                              {tag.name}
-                                            </Badge>
-                                            {editingTagId?.citationId === citation.id && editingTagId?.tagId === tag.id && (
-                                              <div className="absolute z-10 mt-2 w-48 p-2 bg-white rounded-md shadow-lg">
-                                                <div className="flex flex-wrap gap-1 mb-2">
-                                                  {pastelColors.map((pastelColor) => (
-                                                    <button
-                                                      key={pastelColor}
-                                                      className="w-6 h-6 rounded-full"
-                                                      style={{ backgroundColor: pastelColor }}
-                                                      onClick={() => handleTagColorChange(tag.id, pastelColor)}
-                                                    />
-                                                  ))}
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                  <Button 
-                                                    variant="ghost" 
-                                                    size="sm" 
-                                                    onClick={() => handleTagDelete(citation.id, tag.id)}
-                                                    className="text-red-500 hover:text-red-700"
-                                                  >
-                                                    <Trash2 className="h-4 w-4" />
-                                                  </Button>
-                                                  <Button onClick={() => setEditingTagId(null)} size="sm">Close</Button>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ))}
-                                        <div className="relative">
-                                          <Input
-                                            type="text"
-                                            placeholder="Add tag"
-                                            value={newTags[citation.id] || ''}
-                                            onChange={(e) => setNewTags(prev => ({ ...prev, [citation.id]: e.target.value }))}
-                                            onKeyPress={(e) => {
-                                              if (e.key === 'Enter') {
-                                                handleAddTag(citation.id, newTags[citation.id]);
-                                                setNewTags(prev => ({ ...prev, [citation.id]: '' }));
-                                              }
-                                            }}
-                                            className="w-24 h-7 text-xs pr-6 pl-2 py-1 rounded-full"
-                                          />
-                                          <PlusCircle className="w-4 h-4 absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                        </div>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <span className="sr-only">Open menu</span>
-                                            <MoreVertical className="h-4 w-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => openEditDialog(citation)}>
-                                            Edit Citation
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem 
-                                            onClick={() => openDeleteDialog(citation)}
-                                            className={cn("text-red-600 focus:text-red-600 focus:bg-red-50")}
+                                        {copiedStates[citation.id] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="w-[20%] py-2 font-medium">
+                                    {getFriendlyTypeName(citation.type)}
+                                  </TableCell>
+                                  <TableCell className="w-[30%] py-2">
+                                    <div className="flex flex-wrap gap-1 items-center">
+                                      {citation.tags && citation.tags.map((tag) => (
+                                        <div key={tag.id} className="relative inline-block">
+                                          <Badge
+                                            variant="outline"
+                                            className="cursor-pointer text-xs"
+                                            style={{ backgroundColor: tag.color }}
+                                            onClick={() => setEditingTagId({ citationId: citation.id, tagId: tag.id })}
                                           >
-                                            Delete Citation
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </Droppable>
+                                            {tag.name}
+                                          </Badge>
+                                          {editingTagId?.citationId === citation.id && editingTagId?.tagId === tag.id && (
+                                            <div className="absolute z-10 mt-2 w-48 p-2 bg-white rounded-md shadow-lg">
+                                              <div className="flex flex-wrap gap-1 mb-2">
+                                                {pastelColors.map((pastelColor) => (
+                                                  <button
+                                                    key={pastelColor}
+                                                    className="w-6 h-6 rounded-full"
+                                                    style={{ backgroundColor: pastelColor }}
+                                                    onClick={() => handleTagColorChange(tag.id, pastelColor)}
+                                                  />
+                                                ))}
+                                              </div>
+                                              <div className="flex justify-between items-center">
+                                                <Button 
+                                                  variant="ghost" 
+                                                  size="sm" 
+                                                  onClick={() => handleTagDelete(citation.id, tag.id)}
+                                                  className="text-red-500 hover:text-red-700"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                                <Button onClick={() => setEditingTagId(null)} size="sm">Close</Button>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                      <div className="relative">
+                                        <Input
+                                          type="text"
+                                          placeholder="Add tag"
+                                          value={newTags[citation.id] || ''}
+                                          onChange={(e) => setNewTags(prev => ({ ...prev, [citation.id]: e.target.value }))}
+                                          onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                              handleAddTag(citation.id, newTags[citation.id]);
+                                              setNewTags(prev => ({ ...prev, [citation.id]: '' }));
+                                            }
+                                          }}
+                                          className="w-24 h-7 text-xs pr-6 pl-2 py-1 rounded-full"
+                                        />
+                                        <PlusCircle className="w-4 h-4 absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right py-2">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                          <span className="sr-only">Open menu</span>
+                                          <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => openEditDialog(citation)}>
+                                          Edit Citation
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          onClick={() => openDeleteDialog(citation)}
+                                          className={cn("text-red-600 focus:text-red-600 focus:bg-red-50")}
+                                        >
+                                          Delete Citation
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </TableBody>
+                      )}
+                    </Droppable>
+                  </Table>
                 </div>
               </DragDropContext>
             </div>

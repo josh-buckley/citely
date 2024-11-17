@@ -10,7 +10,10 @@ import { FlexibleDateInput } from './ui/FlexibleDateInput'
 import { toast } from "./ui/toast"
 import { CitationRules } from './CitationRules'
 import { CitationTypeSelector } from './CitationTypeSelector'
+import { CitationPreview } from './CitationPreview'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { generatePreviewText } from './CitationPreview'
 
 interface CitationFormProps {
   onSubmit: (citation: Omit<Citation, 'id' | 'project_id' | 'createdAt' | 'updatedAt'>) => void;
@@ -1478,7 +1481,6 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
 
   // Memoize renderInput
   const renderInput = useCallback((fieldName: string, label: string, type: string = 'text') => {
-
     const addBrackets = (type: 'round' | 'square') => {
       const currentValue = formData[fieldName as keyof typeof formData] as string || '';
       // Remove any existing brackets first
@@ -1486,6 +1488,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
       const newValue = type === 'round' ? `(${cleanValue})` : `[${cleanValue}]`;
       handleChange({ target: { name: fieldName, value: newValue } } as React.ChangeEvent<HTMLInputElement>);
     };
+
     // Add this helper function
     const getInputValue = (value: any): string => {
       if (Array.isArray(value) || typeof value === 'object') {
@@ -1513,7 +1516,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             onFocus={() => setActiveField(fieldName)}
             className="flex-1"
           />
-          {fieldName.includes('year') && (
+          {fieldName.includes('year') && (formData.type !== 'legislation' && formData.type !== 'delegated_legislation' && formData.type !== 'bill') && (
             <>
               <Button
                 type="button"
@@ -1565,9 +1568,8 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
         <div className="grid grid-cols-2 gap-6 flex-1 min-h-0">
           <div className="space-y-4 overflow-y-auto px-4">
             <CitationTypeSelector
-              value={formData.type as CitationType}
+              value={formData.type}
               onChange={handleTypeChange}
-              initiallyOpen={isTypeSelectorOpen}
             />
             {formData.type && renderTypeSpecificFields()}
           </div>
@@ -1576,22 +1578,31 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
           </div>
         </div>
 
-        <DialogFooter className="gap-2 px-4 pt-4 pb-0 border-t">
-          <Button
-            type="submit"
-            onClick={handleButtonSubmit}
-            className="bg-black text-white hover:bg-gray-800 px-4 py-2 rounded-md"
-          >
-            {isEditing() ? 'Update' : 'Add'} Citation
-          </Button>
-          <Button
-            type="button"
-            onClick={onCancel}
-            variant="outline"
-            className="border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md"
-          >
-            Cancel
-          </Button>
+        <DialogFooter className="flex flex-col px-4 pt-4 pb-0 border-t">
+          <div className="flex justify-between items-center w-full">
+            <div className="flex-grow">
+              <p className="text-sm bg-white p-3 rounded-md border shadow-sm" dangerouslySetInnerHTML={{ __html: generatePreviewText(formData.type, formData)
+                .replace(/<i>(.*?)<\/i>/g, '<em>$1</em>')
+                .replace(/•/g, '<span class="text-blue-800 mx-1">•</span>') }} />
+            </div>
+            <div className="flex gap-2 shrink-0 ml-4 my-1">
+              <Button
+                type="submit"
+                onClick={handleButtonSubmit}
+                className="bg-black text-white hover:bg-gray-800 px-4 rounded-md flex items-center"
+              >
+                {isEditing() ? 'Update' : 'Add'} Citation
+              </Button>
+              <Button
+                type="button"
+                onClick={onCancel}
+                variant="outline"
+                className="border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 rounded-md flex items-center"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

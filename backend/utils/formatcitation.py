@@ -128,7 +128,7 @@ def format_date(date_string):
     except:
         return date_string  # Return original string if parsing fails
 
-def format_case_reported(case_name=None, year=None, volume=None, law_report_series=None, starting_page=None, pinpoint=None, short_title=None):
+def format_case_reported(case_name=None, year=None, volume=None, law_report_series=None, starting_page=None, pinpoint=None):
     citation = []
     if case_name:
         citation.append(f"<i>{case_name}</i>")
@@ -142,11 +142,9 @@ def format_case_reported(case_name=None, year=None, volume=None, law_report_seri
         citation.append(str(starting_page) + (',' if pinpoint else ''))
     if pinpoint:
         citation.append(str(pinpoint))
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
     return " ".join(citation)
 
-def format_case_unreported_medium_neutral(case_name=None, year=None, court_identifier=None, judgment_number=None, pinpoint=None, short_title=None):
+def format_case_unreported_medium_neutral(case_name=None, year=None, court_identifier=None, judgment_number=None, pinpoint=None):
     citation = []
     if case_name:
         citation.append(f"<i>{case_name}</i>")
@@ -158,11 +156,9 @@ def format_case_unreported_medium_neutral(case_name=None, year=None, court_ident
         citation.append(f"{str(judgment_number)},")
     if pinpoint:
         citation.append(str(pinpoint))
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
     return " ".join(citation)
 
-def format_case_unreported_no_medium_neutral(case_name=None, court=None, judge=None, full_date=None, pinpoint=None, short_title=None):
+def format_case_unreported_no_medium_neutral(case_name=None, court=None, judge=None, full_date=None, pinpoint=None):
     citation = []
     if case_name:
         citation.append(f"<i>{case_name}</i>")
@@ -177,11 +173,9 @@ def format_case_unreported_no_medium_neutral(case_name=None, court=None, judge=N
         citation.append(f"({', '.join(court_info)})")
     if pinpoint:
         citation.append(str(pinpoint))
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
     return " ".join(citation)
 
-def format_legislation(title=None, year=None, jurisdiction=None, pinpoint=None, short_title=None):
+def format_legislation(title=None, year=None, jurisdiction=None, pinpoint=None):
     citation = []
     if title:
         citation.append(f"<i>{title}</i>")
@@ -191,11 +185,9 @@ def format_legislation(title=None, year=None, jurisdiction=None, pinpoint=None, 
         citation.append(f"({jurisdiction})")
     if pinpoint:
         citation.append(str(pinpoint))
-    if short_title:
-        citation.append(f"('<i>{short_title}</i>')")
     return " ".join(citation)
 
-def format_bill(title=None, year=None, jurisdiction=None, pinpoint=None, short_title=None):
+def format_bill(title=None, year=None, jurisdiction=None, pinpoint=None):
     citation = []
     if title:
         citation.append(title)
@@ -205,21 +197,19 @@ def format_bill(title=None, year=None, jurisdiction=None, pinpoint=None, short_t
         citation.append(f"({jurisdiction})")
     if pinpoint:
         citation.append(str(pinpoint))
-    if short_title:
-        citation.append(f"('<i>{short_title}</i>')")
     return " ".join(citation)
 
-def format_explanatory_memorandum(bill_citation=None, pinpoint=None, short_title=None):
-    citation = ["Explanatory Memorandum,"]
+def format_explanatory_memorandum(explanatory_type=None, bill_citation=None, pinpoint=None):
+    citation = []
+    if explanatory_type:
+        citation.append(explanatory_type)
     if bill_citation:
         citation.append(bill_citation)
     if pinpoint:
         citation.append(pinpoint)
-    if short_title:
-        citation.append(f"('{short_title}')")
     return " ".join(citation)
 
-def format_hansard(jurisdiction=None, chamber=None, full_date=None, pinpoint=None, name_of_speaker=None, short_title=None):
+def format_hansard(jurisdiction=None, chamber=None, full_date=None, pinpoint=None, name_of_speaker=None):
     citation = []
     if jurisdiction:
         citation.append(f"{jurisdiction},")
@@ -232,11 +222,10 @@ def format_hansard(jurisdiction=None, chamber=None, full_date=None, pinpoint=Non
         citation.append(str(pinpoint))
     if name_of_speaker:
         citation.append(f"({name_of_speaker})")
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
-def format_treaty(title=None, parties=None, date_opened=None, treaty_series=None, date_in_force=None, pinpoint=None, short_title=None):
+def format_treaty(title=None, parties=None, date_opened=None, treaty_series=None, date_in_force=None, pinpoint=None):
     citation = []
     if title:
         citation.append(f"<i>{title}</i>,")
@@ -250,8 +239,7 @@ def format_treaty(title=None, parties=None, date_opened=None, treaty_series=None
         citation.append(f"(entered into force {format_date(date_in_force)})")
     if pinpoint:
         citation.append(pinpoint)
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
 def format_authors(authors):
@@ -349,7 +337,7 @@ def format_book_chapter(authors=None, chapter_title=None, editors=None, book_tit
         citation.append(str(pinpoint))
     return " ".join(citation)
 
-def format_report(author=None, title=None, document_type=None, series_no=None, document_number=None, full_date=None, pinpoint=None, short_title=None):
+def format_report(author=None, title=None, document_type=None, series_no=None, document_number=None, full_date=None, pinpoint=None):
     citation = []
     if author:
         citation.append(author + ",")
@@ -368,11 +356,10 @@ def format_report(author=None, title=None, document_type=None, series_no=None, d
         citation.append(f"({', '.join(document_info)})")
     if pinpoint:
         citation.append(str(pinpoint))
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
-def format_online_dictionary(title=None, retrieval_date=None, entry_title=None, definition_number=None, short_title=None):
+def format_online_dictionary(title=None, retrieval_date=None, entry_title=None, definition_number=None):
     citation = []
     if title:
         citation.append(f"<i>{title}</i>")
@@ -394,11 +381,10 @@ def format_online_dictionary(title=None, retrieval_date=None, entry_title=None, 
         citation.append(f"'{entry_title}'")
     if definition_number:
         citation.append(f"(def {definition_number})")
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
-def format_hardcopy_dictionary(title=None, edition=None, year=None, entry_title=None, definition_number=None, short_title=None):
+def format_hardcopy_dictionary(title=None, edition=None, year=None, entry_title=None, definition_number=None):
     citation = []
     if title:
         citation.append(f"<i>{title}</i>,")
@@ -408,11 +394,10 @@ def format_hardcopy_dictionary(title=None, edition=None, year=None, entry_title=
         citation.append(f"'{entry_title}'")
     if definition_number:
         citation.append(f"(def {definition_number})")
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
-def format_online_legal_encyclopedia(publisher=None, title=None, retrieval_date=None, title_number=None, title_name=None, chapter_number=None, chapter_name=None, paragraph=None, short_title=None):
+def format_online_legal_encyclopedia(publisher=None, title=None, retrieval_date=None, title_number=None, title_name=None, chapter_number=None, chapter_name=None, paragraph=None):
     citation = []
     if publisher:
         citation.append(publisher + ",")
@@ -426,11 +411,10 @@ def format_online_legal_encyclopedia(publisher=None, title=None, retrieval_date=
         citation.append(f"'{chapter_number} {chapter_name}'")
     if paragraph:
         citation.append(f"[{paragraph}]")
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
-def format_hardcopy_legal_encyclopedia(publisher=None, title=None, volume=None, full_date=None, title_number=None, title_name=None, chapter_number=None, chapter_name=None, paragraph=None, short_title=None):
+def format_hardcopy_legal_encyclopedia(publisher=None, title=None, volume=None, full_date=None, title_number=None, title_name=None, chapter_number=None, chapter_name=None, paragraph=None):
     citation = []
     if publisher:
         citation.append(publisher + ",")
@@ -446,8 +430,7 @@ def format_hardcopy_legal_encyclopedia(publisher=None, title=None, volume=None, 
         citation.append(f"'{chapter_number} {chapter_name}'")
     if paragraph:
         citation.append(f"[{paragraph}]")
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
 def format_online_looseleaf(author=None, publisher=None, title=None, retrieval_date=None, pinpoint=None):
@@ -488,7 +471,7 @@ def format_hardcopy_looseleaf(author=None, publisher=None, title=None, volume=No
         citation.append(str(pinpoint))
     return " ".join(citation)
 
-def format_online_newspaper(author=None, title=None, newspaper=None, full_date=None, pinpoint=None, url=None, short_title=None):
+def format_online_newspaper(author=None, title=None, newspaper=None, full_date=None, pinpoint=None, url=None):
     citation = []
     if author:
         citation.append(author + ",")
@@ -502,8 +485,7 @@ def format_online_newspaper(author=None, title=None, newspaper=None, full_date=N
         citation.append(f"[{pinpoint}]")
     if url:
         citation.append(f"<{url}>")
-    if short_title:
-        citation.append(f"(<i>'{short_title}')</i>")
+
     return " ".join(citation)
 
 def format_printed_newspaper(author=None, title=None, newspaper=None, place=None, full_date=None, starting_page=None, pinpoint=None):
@@ -538,7 +520,7 @@ def format_internet_materials_author(author=None, document_title=None, web_page_
         citation.append(f"<{url}>")
     return " ".join(citation)
 
-def format_internet_materials_body(author=None, document_title=None, web_page_title=None, document_type=None, full_date=None, pinpoint=None, url=None, short_title=None):
+def format_internet_materials_body(author=None, document_title=None, web_page_title=None, document_type=None, full_date=None, pinpoint=None, url=None):
     citation = []
     if author:
         citation.append(f"'{author}',")
