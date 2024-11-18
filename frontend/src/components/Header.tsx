@@ -16,30 +16,29 @@ function Header() {
     router.push('/auth/signin');
   };
 
-  const buttonStyles = "bg-white text-black border border-black hover:bg-gray-50 px-3 py-0.5 rounded-md text-sm font-medium";
-
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white">
       <div className="w-full px-8 flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
             <BookOpen className="h-6 w-6" />
-            <span className="inline-block font-bold">Citely</span>
+            <span className="inline-block font-bold">CiteCounsel</span>
           </Link>
           <NavBar />
         </div>
         <div>
           {user ? (
             <Button 
+              variant="outline"
               onClick={handleSignOut}
-              className={buttonStyles}
+              className="transition-transform duration-200 hover:scale-105"
             >
               Sign Out
             </Button>
           ) : (
             <Button 
               variant="outline"
-              className={buttonStyles}
+              className="transition-transform duration-200 hover:scale-105"
             >
               <Link href="/auth/signin">
                 Sign In

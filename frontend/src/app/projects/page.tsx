@@ -15,7 +15,7 @@ import { Project } from '../../types/project';
 import { NewProjectForm } from '../../components/NewProjectForm';
 import { Tag } from '../../types/citation';
 import { Card, CardHeader, CardTitle } from "../../components/ui/card";
-
+import { Loader } from "../../components/ui/loader";
 
 // Update the ProjectTags type definition
 type ProjectTags = Record<string, Tag[]>;
@@ -125,6 +125,14 @@ export default function ProjectsPage() {
     return <div>Error loading projects</div>;
   }
 
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <Loader size={32} className="text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
 
@@ -171,16 +179,10 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-48 bg-gray-200 animate-pulse rounded-lg"></div>
-          ))}
-        </div>
-      ) : filteredProjects && filteredProjects.length > 0 ? (
+      {filteredProjects && filteredProjects.length > 0 ? (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
-            <div key={project.id} className="transform transition-transform hover:scale-102">
+            <div key={project.id} className="transform transition-transform hover:scale-[1.02]">
               <ProjectCard 
                 key={project.id} 
                 project={project} 

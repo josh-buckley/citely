@@ -29,7 +29,7 @@ export const citationTypes = {
     { value: "submission", label: "Submission" },
   ],
   legislativeMaterials: [
-    { value: "legislation", label: "Legislation" },
+    { value: "act", label: "Act" },
     { value: "delegated_legislation", label: "Delegated Legislation" },
     { value: "delegated_non_government_legislation", label: "Delegated Non-Government Entity Legislation" },
     { value: "bill", label: "Bill" },

@@ -291,7 +291,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
           );
 
         // Legislative Materials
-        case 'legislation':
+        case 'act':
           return (
             <div key="legislation-fields" className="space-y-4">
               {renderInput('title', 'Title')}
@@ -563,6 +563,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
               {renderInput('publisher', 'Publisher')}
               {renderInput('edition', 'Edition')}
               {renderInput('year', 'Year')}
+              {renderInput('volume', 'Volume (Optional)')}
               {renderInput('pinpoint', 'Pinpoint')}
             </div>
           );
@@ -624,13 +625,14 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
                   className="w-full mt-2"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Editor
+              Add Editor
                 </Button>
               </div>
               {renderInput('title', 'Title')}
               {renderInput('publisher', 'Publisher')}
               {renderInput('edition', 'Edition')}
               {renderInput('year', 'Year')}
+              {renderInput('volume', 'Volume (Optional)')}
               {renderInput('starting_page', 'Starting Page')}
               {renderInput('pinpoint', 'Pinpoint')}
             </div>
@@ -1473,6 +1475,20 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
   // Add state for active field
   const [activeField, setActiveField] = useState<string | null>(null);
 
+  // Add this function to handle blur with delay
+  const handleBlur = useCallback(() => {
+    // Small delay to allow the next focus event to fire first
+    setTimeout(() => {
+      // Only clear if no new focus has occurred
+      setActiveField((current) => {
+        if (document.activeElement?.tagName === 'INPUT') {
+          return current;
+        }
+        return null;
+      });
+    }, 10);
+  }, []);
+
   // Add at the top with other state
   const [lastFocusedField, setLastFocusedField] = useState<string | null>(null);
 
@@ -1501,8 +1517,6 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
       <div key={fieldName} className="space-y-2">
         <Label 
           htmlFor={fieldName}
-          onMouseEnter={() => setActiveField(fieldName)}
-          onMouseLeave={() => setActiveField(null)}
         >
           {label}
         </Label>
@@ -1514,9 +1528,10 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             value={getInputValue(formData[fieldName as keyof typeof formData])}
             onChange={handleChange}
             onFocus={() => setActiveField(fieldName)}
+            onBlur={handleBlur}
             className="flex-1"
           />
-          {fieldName.includes('year') && (formData.type !== 'legislation' && formData.type !== 'delegated_legislation' && formData.type !== 'bill') && (
+          {fieldName.includes('year') && (formData.type !== 'act' && formData.type !== 'delegated_legislation' && formData.type !== 'bill' && formData.type !== 'book' && formData.type !== 'book_chapter' && formData.type !== 'book_with_editor' && formData.type !== 'translated_book' && formData.type !== 'audiobook') && (
             <>
               <Button
                 type="button"
@@ -1541,7 +1556,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
         </div>
       </div>
     );
-  }, [formData, handleChange, setActiveField]);
+  }, [formData, handleChange, setActiveField, handleBlur]);
 
   // Add this helper function
   const isEditing = useCallback(() => {
@@ -1570,6 +1585,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             <CitationTypeSelector
               value={formData.type}
               onChange={handleTypeChange}
+              initiallyOpen={!initialValues.type}
             />
             {formData.type && renderTypeSpecificFields()}
           </div>

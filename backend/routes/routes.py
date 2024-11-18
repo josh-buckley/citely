@@ -81,36 +81,49 @@ def add_tag_to_citation(citation_id):
     try:
         print("Adding tag to citation...")
         tag_data = request.json
+        print(f"Received request to add tag: {tag_data}")
         
         # Check if tag exists
         existing_tags = tag_service.get_tags()
-        existing_tag = next(
-            (tag for tag in existing_tags if tag.name.lower() == tag_data['name'].lower()),
-            None
-        )
+        print(f"Checking for existing tag: '{tag_data['name'].lower()}'")
+        print(f"Looking for tag with normalized name: '{tag_data['name'].lower()}'")
+        matching_tags = [tag for tag in existing_tags if tag.name.lower() == tag_data['name'].lower()]
+        print(f"Found tags: {[{'id': t.id, 'name': t.name, 'color': t.color, 'created_at': t.created_at, 'updated_at': t.updated_at} for t in matching_tags]}")
         
-        if existing_tag:
-            tag = existing_tag
+        if matching_tags:
+            tag = matching_tags[0]
+            print(f"Found existing tag: id={tag.id} name='{tag.name}' color='{tag.color}'")
         else:
             # Create new tag if it doesn't exist
             tag = tag_service.create_tag(
                 name=tag_data['name'],
                 color=tag_data['color']
             )
+            print(f"Created new tag: id={tag.id} name='{tag.name}' color='{tag.color}'")
         
         # Create citation-tag association
         citation_service = CitationService()
         citation = citation_service.get_citation(citation_id)
         if not citation:
             return jsonify({'error': 'Citation not found'}), 404
-            
-        # Add tag to citation's tags
-        current_tags = citation.tags or []
-        if not any(t.id == tag.id for t in current_tags):
-            current_tags.append(tag)
-            citation_service.update_citation(citation_id, {'tags': current_tags})
         
-        return jsonify(tag.dict())
+        print(f"Creating association between citation {citation_id} and tag {tag.id}")
+        try:
+            # Check if the association already exists
+            existing_associations = citation_service.get_citation_tag_associations(citation_id)
+            if tag.id in [assoc['tag_id'] for assoc in existing_associations]:
+                print(f"Association between citation {citation_id} and tag {tag.id} already exists")
+                return jsonify(tag.dict())
+                
+            # Create the association
+            citation_service.create_tag_for_citation(citation_id, tag.id)
+            print(f"Successfully created association between citation {citation_id} and tag {tag.id}")
+            return jsonify(tag.dict())
+            
+        except Exception as e:
+            print(f"Error in create_tag_for_citation: {str(e)}")
+            raise
+            
     except Exception as e:
         print("Error adding tag:", str(e))
         return jsonify({'error': str(e)}), 500

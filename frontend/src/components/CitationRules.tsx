@@ -18,7 +18,7 @@ export function CitationRules({ activeField, citationType, formData }: CitationR
   }
 
   // Handle legislation rules
-  if (citationType === 'legislation' || 
+  if (citationType === 'act' || 
       citationType === 'bill' || 
       citationType === 'explanatory_memorandum') {
     // For legislation short_title, use individualParts rules

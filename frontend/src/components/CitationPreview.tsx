@@ -155,6 +155,44 @@ const formatAuthors = (authors: string | string[]): string => {
   return `${authors[0]} et al`;
 };
 
+// Function to format editors according to AGLC4
+const formatEditors = (editors: string | string[]): string => {
+  if (!editors) {
+    return '';
+  }
+  if (typeof editors === 'string') {
+    return `${editors} (ed)`;
+  }
+  if (editors.length === 1) {
+    return `${editors[0]} (ed)`;
+  } else if (editors.length === 2) {
+    return `${editors[0]} and ${editors[1]} (eds)`;
+  } else if (editors.length === 3) {
+    return `${editors[0]}, ${editors[1]} and ${editors[2]} (eds)`;
+  } else {
+    return `${editors[0]} et al (eds)`;
+  }
+};
+
+// Function to format editors without suffix according to AGLC4
+const formatEditorsWithoutSuffix = (editors: string | string[]): string => {
+  if (!editors) {
+    return '';
+  }
+  if (typeof editors === 'string') {
+    return editors;
+  }
+  if (editors.length === 1) {
+    return editors[0];
+  } else if (editors.length === 2) {
+    return `${editors[0]} and ${editors[1]}`;
+  } else if (editors.length === 3) {
+    return `${editors[0]}, ${editors[1]} and ${editors[2]}`;
+  } else {
+    return `${editors[0]} et al`;
+  }
+};
+
 // Function to generate preview text
 export const generatePreviewText = (type: string, formData: any): string => {
   const getValue = (field: string): string => {
@@ -166,10 +204,10 @@ export const generatePreviewText = (type: string, formData: any): string => {
       return value.length > 0 ? `<span class="bg-gray-100 text-gray-600 rounded px-1">${formatAuthors(value)}</span>` : `<span class="bg-gray-100 text-gray-600 rounded px-1">${getFieldPlaceholder(field)}</span>`;
     }
     if (field === 'editors' && Array.isArray(value)) {
-      return value.length > 0 ? `<span class="bg-gray-100 text-gray-600 rounded px-1">${value.join(' and ')}</span>` : `<span class="bg-gray-100 text-gray-600 rounded px-1">${getFieldPlaceholder(field)}</span>`;
+      return value.length > 0 ? `<span class="bg-gray-100 text-gray-600 rounded px-1">${value.join(', ')}</span>` : `<span class="bg-gray-100 text-gray-600 rounded px-1">${getFieldPlaceholder(field)}</span>`;
     }
     // Apply consistent styling to all values
-    return `<span class="bg-gray-100 text-gray-600 rounded px-1">${String(value)}</span>`;
+    return `<span class="bg-gray-100 text-gray-600 rounded px-1">${value}</span>`;
   };
 
   const wrapInBrackets = (value: string): string => {
@@ -256,7 +294,7 @@ export const generatePreviewText = (type: string, formData: any): string => {
       return elements.join(' ');
     }
     
-    case 'legislation': {
+    case 'act': {
       const elements: string[] = [];
 
       const title = getValue('title');
@@ -386,7 +424,7 @@ export const generatePreviewText = (type: string, formData: any): string => {
 
       const authors = getValue('authors');
       if (authors !== getFieldPlaceholder('authors')) {
-        elements.push(authors + ',');
+        elements.push(`${authors},`);
       }
 
       const title = getValue('title');
@@ -426,61 +464,162 @@ export const generatePreviewText = (type: string, formData: any): string => {
     }
     
     case 'book': {
-      const elements: string[] = [
-        getValue('authors'),
-        wrapInItalics(`'${getValue('title')}'`)
-      ];
-      
-      const publicationDetails: string[] = [
-        getValue('publisher'),
-        `${getValue('edition')} ed`,
-        getValue('year')
-      ];
-      
-      elements.push(`(${publicationDetails.join(', ')})`);
-      
+      const elements: string[] = [];
+
+      const authors = getValue('authors');
+      if (authors !== getFieldPlaceholder('authors')) {
+        elements.push(`${authors},`);
+      }
+
+      const title = getValue('title');
+      if (title !== getFieldPlaceholder('title')) {
+        elements.push(wrapInItalics(`'${title}'`));
+      }
+
+      const publicationDetails: string[] = [];
+
+      const publisher = getValue('publisher');
+      if (publisher !== getFieldPlaceholder('publisher')) {
+        publicationDetails.push(publisher);
+      }
+
+      const edition = getValue('edition');
+      if (edition !== getFieldPlaceholder('edition')) {
+        publicationDetails.push(`${edition} ed`);
+      }
+
+      const year = getValue('year');
+      if (year !== getFieldPlaceholder('year')) {
+        publicationDetails.push(year);
+      }
+
+      if (publicationDetails.length > 0) {
+        elements.push(wrapInParens(publicationDetails.join(', ')));
+      }
+
       const volume = getValue('volume');
       if (volume !== getFieldPlaceholder('volume')) {
-        elements.push(volume);
+        elements.push(`vol ${volume}`);
       }
-      
+
       const pinpoint = getValue('pinpoint');
       if (pinpoint !== getFieldPlaceholder('pinpoint')) {
         elements.push(pinpoint);
       }
-      
+
+      return elements.join(' ');
+    }
+    
+    case 'book_with_editor': {
+      const elements: string[] = [];
+
+      const authors = getValue('authors');
+      if (authors !== getFieldPlaceholder('authors')) {
+        elements.push(`${authors},`);
+      }
+
+      const title = getValue('title');
+      if (title !== getFieldPlaceholder('title')) {
+        elements.push(wrapInItalics(title));
+      }
+
+      const editors = formData.editors;
+      if (editors && Array.isArray(editors) && editors.length > 0) {
+        elements.push(`ed <span class="bg-gray-100 text-gray-600 rounded px-1">${formatEditorsWithoutSuffix(editors)}</span>`);
+      } else if (editors && typeof editors === 'string' && editors !== '') {
+        elements.push(`ed <span class="bg-gray-100 text-gray-600 rounded px-1">${editors}</span>`);
+      } else {
+        elements.push(`ed <span class="bg-gray-100 text-gray-600 rounded px-1">${getFieldPlaceholder('editors')}</span>`);
+      }
+
+      const publicationDetails: string[] = [];
+
+      const publisher = getValue('publisher');
+      if (publisher !== getFieldPlaceholder('publisher')) {
+        publicationDetails.push(publisher);
+      }
+
+      const edition = getValue('edition');
+      if (edition !== getFieldPlaceholder('edition')) {
+        publicationDetails.push(`${edition} ed`);
+      }
+
+      const year = getValue('year');
+      if (year !== getFieldPlaceholder('year')) {
+        publicationDetails.push(year);
+      }
+
+      if (publicationDetails.length > 0) {
+        elements.push(wrapInParens(publicationDetails.join(', ')));
+      }
+
+      const pinpoint = getValue('pinpoint');
+      if (pinpoint !== getFieldPlaceholder('pinpoint')) {
+        elements.push(pinpoint);
+      }
+
       return elements.join(' ');
     }
     
     case 'book_chapter': {
-      const elements: string[] = [
-        getValue('authors') + ',',
-        `'${getValue('chapter_title')}'`,
-        `in ${getValue('editors')}${getValue('editors') !== getFieldPlaceholder('editors') ? ' (eds),' : ''}`,
-        wrapInItalics(getValue('book_title'))
-      ];
-      
-      const publicationDetails: string[] = [
-        getValue('publisher'),
-        `${getValue('edition')} ed`,
-        getValue('year')
-      ];
-      
-      elements.push(`(${publicationDetails.join(', ')})`);
-      
+      const elements: string[] = [];
+
+      const authors = getValue('authors');
+      if (authors !== getFieldPlaceholder('authors')) {
+        elements.push(`${authors},`);
+      }
+
+      const chapterTitle = getValue('chapter_title');
+      if (chapterTitle !== getFieldPlaceholder('chapter_title')) {
+        elements.push(`'${chapterTitle}'`);
+      }
+
+      const editors = getValue('editors');
+      if (editors !== getFieldPlaceholder('editors')) {
+        elements.push(`in ${formatEditors(editors)},`);
+      }
+
+      const bookTitle = getValue('book_title');
+      if (bookTitle !== getFieldPlaceholder('book_title')) {
+        elements.push(wrapInItalics(bookTitle));
+      }
+
+      const publicationDetails: string[] = [];
+
+      const publisher = getValue('publisher');
+      if (publisher !== getFieldPlaceholder('publisher')) {
+        publicationDetails.push(publisher);
+      }
+
+      const edition = getValue('edition');
+      if (edition !== getFieldPlaceholder('edition')) {
+        publicationDetails.push(`${edition} ed`);
+      }
+
+      const year = getValue('year');
+      if (year !== getFieldPlaceholder('year')) {
+        publicationDetails.push(year);
+      }
+
+      if (publicationDetails.length > 0) {
+        elements.push(wrapInParens(publicationDetails.join(', ')));
+      }
+
+      const volume = getValue('volume');
+      if (volume !== getFieldPlaceholder('volume')) {
+        elements.push(`vol ${volume}`);
+      }
+
       const startingPage = getValue('starting_page');
       if (startingPage !== getFieldPlaceholder('starting_page')) {
-        elements.push(startingPage);
+        elements.push(startingPage + (getValue('pinpoint') !== getFieldPlaceholder('pinpoint') ? ',' : ''));
       }
-      
+
       const pinpoint = getValue('pinpoint');
       if (pinpoint !== getFieldPlaceholder('pinpoint')) {
-        if (elements[elements.length - 1] !== getFieldPlaceholder('starting_page')) {
-          elements[elements.length - 1] += ',';
-        }
         elements.push(pinpoint);
       }
-      
+
       return elements.join(' ');
     }
     
@@ -943,6 +1082,52 @@ export const generatePreviewText = (type: string, formData: any): string => {
       const pinpoint = getValue('pinpoint');
       if (pinpoint !== getFieldPlaceholder('pinpoint')) {
         elements.push(`, ${pinpoint}`);
+      }
+
+      return elements.join(' ');
+    }
+    
+    case 'translated_book': {
+      const elements: string[] = [];
+
+      const authors = getValue('authors');
+      if (authors !== getFieldPlaceholder('authors')) {
+        elements.push(`${authors},`);
+      }
+
+      const translationTitle = getValue('translation_title');
+      if (translationTitle !== getFieldPlaceholder('translation_title')) {
+        elements.push(wrapInItalics(translationTitle) + ',');
+      }
+
+      const translator = getValue('translator');
+      if (translator !== getFieldPlaceholder('translator')) {
+        elements.push(`tr ${translator}`);
+      }
+
+      const publicationDetails: string[] = [];
+      const publisher = getValue('publisher');
+      if (publisher !== getFieldPlaceholder('publisher')) {
+        publicationDetails.push(publisher);
+      }
+
+      const edition = getValue('edition');
+      if (edition !== getFieldPlaceholder('edition')) {
+        publicationDetails.push(`${edition} ed`);
+      }
+
+      const year = getValue('year');
+      if (year !== getFieldPlaceholder('year')) {
+        publicationDetails.push(year);
+      }
+
+      if (publicationDetails.length > 0) {
+        elements.push(wrapInParens(publicationDetails.join(', ')));
+      }
+
+      const pinpoint = getValue('pinpoint');
+      if (pinpoint !== getFieldPlaceholder('pinpoint')) {
+        elements.push(pinpoint);
       }
 
       return elements.join(' ');

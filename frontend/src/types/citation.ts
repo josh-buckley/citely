@@ -2,7 +2,7 @@ export type CitationType =
   | 'case_reported'
   | 'case_unreported_medium_neutral'
   | 'case_unreported_no_medium_neutral'
-  | 'legislation'
+  | 'act'
   | 'bill'
   | 'explanatory_memorandum'
   | 'hansard'

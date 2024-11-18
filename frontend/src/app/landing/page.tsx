@@ -9,16 +9,15 @@ import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { BookOpen, ChevronDown, ChevronUp, Scale, Star, Award, ChevronLeft, ChevronRight, PencilIcon, PlusCircle, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-
-
+import { Loader } from "@/components/ui/loader"
 
 const pastelColors = [
   "#16697A", "#489FB5", "#82C0CC", "#B7B7A4", "#f5dfbb", "#FFA62B"
 ];
 
 export default function LandingPage() {
-const router = useRouter();  // Replace useNavigate
+  const router = useRouter();  // Replace useNavigate
+  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false)
   const [citation, setCitation] = useState({
     caseName: "Donoghue v Stevenson",
@@ -147,6 +146,22 @@ const router = useRouter();  // Replace useNavigate
     setTags(tags.filter(tag => tag.id !== tagId));
     setEditingTagId(null);
   };
+
+  useEffect(() => {
+    // Simulate loading time for animations
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <Loader size={32} className="text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">

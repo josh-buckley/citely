@@ -4,7 +4,6 @@ import React, { useState, useEffect, KeyboardEvent, useRef, useCallback } from '
 import { Citation, CitationType, Tag } from '../../../../types/citation'
 import { 
   fetchCitations, 
-  reorderCitations, 
   updateCitation, 
   deleteCitation, 
   addTag, 
@@ -22,7 +21,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "../../../../components/ui/badge"
 import { ScrollArea } from "../../../../components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
-import { BookOpen, FileText, Gavel, Search, PlusCircle, Edit, Trash2, Copy, X, StickyNote, Check, Book, Globe, MoreHorizontal, Plus, ExternalLink, MoreVertical, ChevronDown, ChevronUp, Pencil, ChevronRight } from 'lucide-react'
+import { BookOpen, FileText, Gavel, Search, PlusCircle, Edit, Trash2, Copy, X, StickyNote, Check, Book, Globe, MoreHorizontal, Plus, ExternalLink, MoreVertical, ChevronDown, ChevronUp, Pencil, ChevronRight, Files, Library, Layers } from 'lucide-react'
 import { toast } from "../../../../components/ui/toast"
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { GripVertical } from 'lucide-react'
@@ -40,6 +39,7 @@ import { citationTypes } from '../../../../components/CitationTypeSelector'; // 
 import { supabase } from '../../../../lib/supabase';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { Loader } from "../../../../components/ui/loader"
 
 interface DragHandleProps {
   dragHandleProps: any;
@@ -52,13 +52,21 @@ const DragHandle: React.FC<DragHandleProps> = ({ dragHandleProps }) => (
 );
 
 const pastelColors = [
-  "#16697A",
-  "#489FB5",
-  "#82C0CC",
-  "#B7B7A4",
-  "#f5dfbb",
-  "#FFA62B",
+  "#16697A", // 1
+  "#489FB5", // 2
+  "#82C0CC", // 3
+  "#619b8a", // 4
+  "#a1c181", // 5
+  "#d4e09b", // 6
+  "#f2cc8f", // 7
+  "#fcca46", // 8
+  "#FFA62B", // 9
+  "#ffa5ab", // 10
+  "#dd2d4a", // 11
+  "#dd1c1a", // 12
 ];
+
+
 
 // Add this function at the top of your file, outside of the CitationManager component
 const getFriendlyTypeName = (type: string): string => {
@@ -95,7 +103,7 @@ const categoryTypeMappings = {
     'submission'
   ],
   legislative: [
-    'legislation',
+    'act',
     'delegated_legislation',
     'delegated_non_government_legislation',
     'bill',
@@ -166,12 +174,44 @@ export default React.memo(function CitationManager() {
   const [citations, setCitations] = useState<Citation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [isDragging, setIsDragging] = useState(false);
   const [filteredCitations, setFilteredCitations] = useState<Citation[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<CitationType[]>([]);
   const [selectedTags, setSelectedTags] = useState<{ id: string; name: string; color: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState('')
   const [tagColors, setTagColors] = useState<Record<string, string>>({});
+
+  // Filter categories for citation types
+  const filterCategories = {
+    main: [
+      { value: 'case_reported', label: 'Judicial Materials', icon: <Gavel className="mr-2 h-4 w-4" /> },
+      { value: 'act', label: 'Legislative Materials', icon: <FileText className="mr-2 h-4 w-4" /> },
+      { value: 'journal_article', label: 'Secondary Sources', icon: <BookOpen className="mr-2 h-4 w-4" /> },
+      { value: 'treaty', label: 'International Sources', icon: <Globe className="mr-2 h-4 w-4" /> },
+      { value: 'miscellaneous', label: 'Miscellaneous', icon: <MoreHorizontal className="mr-2 h-4 w-4" /> },
+    ],
+  };
+
+  // Add this function to handle category clicks
+  const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
+    const typesInCategory = [...categoryTypeMappings[category]] as CitationType[];
+    setSelectedTypes(prevTypes => {
+      const allTypesInCategorySelected = typesInCategory.every(type => 
+        prevTypes.includes(type)
+      );
+
+      // If all types in category are selected, remove them all
+      if (allTypesInCategorySelected) {
+        return prevTypes.filter(type => !typesInCategory.includes(type));
+      }
+      
+      // Otherwise, add all types from the category
+      const newTypes = new Set([...prevTypes]);
+      typesInCategory.forEach(type => newTypes.add(type));
+      return Array.from(newTypes);
+    });
+  };
+
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -192,8 +232,6 @@ export default React.memo(function CitationManager() {
     url: '',
     notes: '',
     tags: [],
-    order: 0,
-    formatted_citation: '',
     updated_at: new Date(),
     created_at: new Date(),
     
@@ -338,12 +376,6 @@ export default React.memo(function CitationManager() {
   // Add this new state to track the currently editing tag
   const [editingTagId, setEditingTagId] = useState<{ citationId: string, tagId: string } | null>(null);
 
-
-  const [sortOrder, setSortOrder] = useState<string>('Custom Sort');
-
-  // Add new state for tracking drag state
-  const [isDragging, setIsDragging] = useState(false);
-
   useEffect(() => {
     const checkAuth = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -370,9 +402,8 @@ export default React.memo(function CitationManager() {
         ...citation,
         type: citation.type!,
         project_id: project_id,
-        order: citations.length + 1,
-        created_at: new Date(),
         updated_at: new Date(),
+        created_at: new Date(),
         tags: citation.tags || [],
         formatted_citation: citation.formatted_citation || ''
       };
@@ -390,62 +421,6 @@ export default React.memo(function CitationManager() {
       console.error('Citation creation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to add citation');
     }
-  };
-
-const sortCitations = (citations: Citation[]): Citation[] => {
-  if (sortOrder === 'Custom Sort') {
-    return [...citations].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  }
-
-  return [...citations].sort((a, b) => {
-    switch (sortOrder) {
-      case 'Date Added (oldest to newest)':
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      case 'Date Added (newest to oldest)':
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      case 'Date Modified (oldest to newest)':
-        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
-      case 'Date Modified (newest to oldest)':
-        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      case 'Alphabetical (A-Z)':
-        return (a.formatted_citation ?? '').localeCompare(b.formatted_citation ?? '');
-      case 'Alphabetical (Z-A)':
-        return (b.formatted_citation ?? '').localeCompare(a.formatted_citation ?? '');
-      default:
-        return 0;
-    }
-  });
-};
-
-// Add this function to handle category clicks
-const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
-  const typesInCategory = [...categoryTypeMappings[category]] as CitationType[];
-  setSelectedTypes(prevTypes => {
-    const allTypesInCategorySelected = typesInCategory.every(type => 
-      prevTypes.includes(type)
-    );
-
-    // If all types in category are selected, remove them all
-    if (allTypesInCategorySelected) {
-      return prevTypes.filter(type => !typesInCategory.includes(type));
-    }
-    
-    // Otherwise, add all types from the category
-    const newTypes = new Set([...prevTypes]);
-    typesInCategory.forEach(type => newTypes.add(type));
-    return Array.from(newTypes);
-  });
-};
-
-  // Update the filterCategories object
-  const filterCategories = {
-    main: [
-      { value: 'case_reported', label: 'Cases', icon: <Gavel className="mr-2 h-4 w-4" /> },
-      { value: 'legislation', label: 'Legislative Materials', icon: <FileText className="mr-2 h-4 w-4" /> },
-      { value: 'journal_article', label: 'Secondary Sources', icon: <BookOpen className="mr-2 h-4 w-4" /> },
-      { value: 'treaty', label: 'International Materials', icon: <Globe className="mr-2 h-4 w-4" /> },
-      { value: 'miscellaneous', label: 'Miscellaneous', icon: <MoreHorizontal className="mr-2 h-4 w-4" /> },
-    ],
   };
 
   useEffect(() => {
@@ -659,15 +634,15 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
   };
 
   useEffect(() => {
-    const filteredCitations = sortCitations(citations.filter(citation => 
+    const filteredCitations = citations.filter(citation => 
       (selectedTypes.length === 0 || selectedTypes.includes(citation.type)) &&
       (selectedTags.length === 0 || selectedTags.every(selectedTag => 
         citation.tags?.some(citationTag => String(citationTag.id) === String(selectedTag.id))
       )) &&
-      (searchTerm === '' || citation.formatted_citation?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-    ));
+      (searchTerm === '' || citation.formatted_citation?.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
     setFilteredCitations(filteredCitations);
-  }, [citations, selectedTypes, selectedTags, searchTerm, sortOrder]);
+  }, [citations, selectedTypes, selectedTags, searchTerm]);
 
   const handleAuthorChange = (index: number, value: string) => {
     const newAuthors = [...authors];
@@ -725,8 +700,6 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
     const newCitation: Citation = {
       ...formData,
       project_id: project_id ?? '',
-      order: citations.length + 1,
-      formatted_citation: '',
       updated_at: new Date(),
       created_at: new Date(),
       authors: formData.authors || [],
@@ -858,41 +831,29 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
   
   // Modified onDragEnd function
   const onDragEnd = async (result: DropResult) => {
+    const { destination, source, reason } = result;
     setIsDragging(false);
-    
-    if (!result.destination || result.source.droppableId !== 'citations-list') {
+
+    // Not a thing to do...
+    if (!destination || reason === 'CANCEL') {
       return;
     }
 
-    if (sortOrder !== 'Custom Sort') {
-      toast("Please switch to 'Custom Sort' mode to reorder citations");
+    // Did not move anywhere - can bail early
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
       return;
     }
-
-    // Get the current filtered indices mapping to full citation array indices
-    const filteredToFullIndicesMap = citations
-      .map((citation, index) => ({citation, index}))
-      .filter(item => filteredCitations.some(fc => fc.id === item.citation.id))
-      .map(item => item.index);
-
-    // Map the source and destination indices from filtered to full array
-    const sourceIndex = filteredToFullIndicesMap[result.source.index];
-    const destinationIndex = filteredToFullIndicesMap[result.destination.index];
 
     // Create a new array with the updated order
     const newCitations = Array.from(citations);
-    const [movedItem] = newCitations.splice(sourceIndex, 1);
-    newCitations.splice(destinationIndex, 0, movedItem);
-
-    // Update order properties
-    const updatedCitations = newCitations.map((citation, index) => ({
-      ...citation,
-      order: index + 1
-    }));
+    const [movedCitation] = newCitations.splice(source.index, 1);
+    newCitations.splice(destination.index, 0, movedCitation);
 
     try {
-      setCitations(updatedCitations);
-      await reorderCitations(updatedCitations);
+      setCitations(newCitations);
       toast.success("Citations reordered successfully");
     } catch (error) {
       console.error('Error saving new order:', error);
@@ -917,7 +878,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
 
   const getCitationCounts = () => {
     const counts = {
-      total: citations.length,
+      total: filteredCitations.length,
       cases: 0,
       legislative: 0,
       secondary: 0,
@@ -942,7 +903,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
       }
       // Legislative Materials
       else if ([
-        'legislation',
+        'act',
         'delegated_legislation',
         'delegated_non_government_legislation',
         'bill',
@@ -983,7 +944,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
       ].includes(citation.type)) {
         counts.secondary++;
       }
-      // International Materials
+      // International Sources
       else if ([
         'treaty'
       ].includes(citation.type)) {
@@ -1009,7 +970,11 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
 
   // Update the return statement to handle loading and error states
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <Loader size={32} className="text-primary" />
+      </div>
+    )
   }
 
   if (error) {
@@ -1022,15 +987,45 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
       if (types.length === categoryTypes.length && 
           categoryTypes.every(type => types.includes(type as CitationType))) {
         switch(category) {
-          case 'cases': return 'All Cases';
+          case 'cases': return 'All Judicial Materials';
           case 'legislative': return 'All Legislative Materials';
           case 'secondary': return 'All Secondary Sources';
-          case 'international': return 'All International Materials';
+          case 'international': return 'All International Sources';
           case 'miscellaneous': return 'All Miscellaneous';
         }
       }
     }
     return null;
+  }
+
+  function adjustColorBrightness(color: string, amount: number): string {
+    const rgb = hexToRgb(color);
+    if (!rgb) return color;
+    
+    const newRgb = {
+      r: Math.max(0, Math.min(255, Math.round(rgb.r + amount))),
+      g: Math.max(0, Math.min(255, Math.round(rgb.g + amount))),
+      b: Math.max(0, Math.min(255, Math.round(rgb.b + amount))),
+    };
+    return rgbToHex(newRgb);
+  }
+
+  function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  function rgbToHex(rgb: { r: number; g: number; b: number }): string {
+    return '#' + [rgb.r, rgb.g, rgb.b]
+      .map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      })
+      .join('');
   }
 
   return (
@@ -1051,7 +1046,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
-                            className="w-full justify-start px-0"
+                            className="w-full justify-start px-0 transition-transform hover:scale-102"
                           >
                             <div className="flex items-center">
                               {category.icon}
@@ -1067,16 +1062,17 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                         >
                           {Object.entries(citationTypes).map(([key, types]) => {
                             if (
-                              (category.label === 'Cases' && key === 'cases') ||
+                              (category.label === 'Judicial Materials' && key === 'cases') ||
                               (category.label === 'Legislative Materials' && key === 'legislativeMaterials') ||
                               (category.label === 'Secondary Sources' && key === 'secondarySources') ||
-                              (category.label === 'International Materials' && key === 'internationalMaterials') ||
+                              (category.label === 'International Sources' && key === 'internationalMaterials') ||
                               (category.label === 'Miscellaneous' && key === 'miscellaneous')
                             ) {
                               return types.map(type => (
                                 <DropdownMenuItem
                                   key={type.value}
                                   className={cn(
+                                    "transition-transform hover:scale-102",
                                     selectedTypes.includes(type.value as CitationType) && "bg-accent"
                                   )}
                                   onClick={() => handleTypeFilter(type.value as CitationType)}
@@ -1137,14 +1133,14 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                   <CardTitle className="text-sm font-medium">
                     Total Citations
                   </CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <Layers className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-left">
                     <NumberFlow
                       value={citationCounts.total}
                       continuous={true}
-                      transformTiming={{ duration: 700, easing: 'ease-out' }}
+                      transformTiming={{ duration: 300, easing: 'ease-out' }}
                     />
                   </div>
                 </CardContent>
@@ -1152,17 +1148,31 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               <Button
                 variant="ghost"
                 className="p-0 h-auto hover:bg-transparent"
-                onClick={() => handleCategoryClick('cases')}
+                onClick={() => {
+                  const typesInCategory = categoryTypeMappings.cases;
+                  setSelectedTypes(prevTypes => {
+                    const allTypesInCategorySelected = typesInCategory.every(type =>
+                      prevTypes.includes(type)
+                    );
+                    toast(allTypesInCategorySelected ? "Removed filter" : "Added filter");
+                    if (allTypesInCategorySelected) {
+                      return prevTypes.filter(type => !typesInCategory.includes(type));
+                    }
+                    const newTypes = new Set([...prevTypes]);
+                    typesInCategory.forEach(type => newTypes.add(type));
+                    return Array.from(newTypes);
+                  });
+                }}
               >
                 <Card className={cn(
                   "w-full transition-colors transition-transform duration-200 hover:scale-105",
-                  categoryTypeMappings.cases.every(type => 
-                    selectedTypes.includes(type as CitationType)
+                  categoryTypeMappings.cases.every(type =>
+                    selectedTypes.includes(type)
                   ) && "bg-primary/5"
                 )}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Cases
+                      Judicial
                     </CardTitle>
                     <Gavel className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
@@ -1171,7 +1181,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                       <NumberFlow
                         value={citationCounts.cases}
                         continuous={true}
-                        transformTiming={{ duration: 700, easing: 'ease-out' }}
+                        transformTiming={{ duration: 300, easing: 'ease-out' }}
                       />
                     </div>
                   </CardContent>
@@ -1184,8 +1194,8 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               >
                 <Card className={cn(
                   "w-full transition-colors transition-transform duration-200 hover:scale-105",
-                  categoryTypeMappings.legislative.every(type => 
-                    selectedTypes.includes(type as CitationType)
+                  categoryTypeMappings.legislative.every(type =>
+                    selectedTypes.includes(type)
                   ) && "bg-primary/5"
                 )}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1199,7 +1209,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                       <NumberFlow
                         value={citationCounts.legislative}
                         continuous={true}
-                        transformTiming={{ duration: 700, easing: 'ease-out' }}
+                        transformTiming={{ duration: 300, easing: 'ease-out' }}
                       />
                     </div>
                   </CardContent>
@@ -1212,8 +1222,8 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               >
                 <Card className={cn(
                   "w-full transition-colors transition-transform duration-200 hover:scale-105",
-                  categoryTypeMappings.secondary.every(type => 
-                    selectedTypes.includes(type as CitationType)
+                  categoryTypeMappings.secondary.every(type =>
+                    selectedTypes.includes(type)
                   ) && "bg-primary/5"
                 )}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1227,7 +1237,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                       <NumberFlow
                         value={citationCounts.secondary}
                         continuous={true}
-                        transformTiming={{ duration: 700, easing: 'ease-out' }}
+                        transformTiming={{ duration: 300, easing: 'ease-out' }}
                       />
                     </div>
                   </CardContent>
@@ -1240,8 +1250,8 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               >
                 <Card className={cn(
                   "w-full transition-colors transition-transform duration-200 hover:scale-105",
-                  categoryTypeMappings.international.every(type => 
-                    selectedTypes.includes(type as CitationType)
+                  categoryTypeMappings.international.every(type =>
+                    selectedTypes.includes(type)
                   ) && "bg-primary/5"
                 )}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1255,7 +1265,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                       <NumberFlow
                         value={citationCounts.international}
                         continuous={true}
-                        transformTiming={{ duration: 700, easing: 'ease-out' }}
+                        transformTiming={{ duration: 300, easing: 'ease-out' }}
                       />
                     </div>
                   </CardContent>
@@ -1268,8 +1278,8 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               >
                 <Card className={cn(
                   "w-full transition-colors transition-transform duration-200 hover:scale-105",
-                  categoryTypeMappings.miscellaneous.every(type => 
-                    selectedTypes.includes(type as CitationType)
+                  categoryTypeMappings.miscellaneous.every(type =>
+                    selectedTypes.includes(type)
                   ) && "bg-primary/5"
                 )}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1283,7 +1293,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                       <NumberFlow
                         value={citationCounts.miscellaneous}
                         continuous={true}
-                        transformTiming={{ duration: 700, easing: 'ease-out' }}
+                        transformTiming={{ duration: 300, easing: 'ease-out' }}
                       />
                     </div>
                   </CardContent>
@@ -1301,30 +1311,12 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                   className="pl-8"
                 />
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    {sortOrder} <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {[
-                    'Date Added (oldest to newest)',
-                    'Date Added (newest to oldest)',
-                    'Date Modified (oldest to newest)',
-                    'Date Modified (newest to oldest)',
-                    'Alphabetical (A-Z)',
-                    'Alphabetical (Z-A)',
-                    'Custom Sort'
-                  ].map((order) => (
-                    <DropdownMenuItem key={order} onSelect={() => setSortOrder(order)}>
-                      {order}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button onClick={() => setIsAddingCitation(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 border border-black rounded-md transition-transform duration-200 hover:scale-105 group">
-                <PlusCircle className="mr-2 h-4 w-4" />
+              <Button
+                variant="outline"
+                onClick={() => setIsAddingCitation(true)}
+                className="ml-2 transition-transform duration-200 hover:scale-105"
+              >
+                <Plus className="mr-2 h-4 w-4" />
                 Add Citation
               </Button>
             </div>
@@ -1406,19 +1398,15 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                         <TableHead className="text-sm"></TableHead>
                       </TableRow>
                     </TableHeader>
-                    <Droppable 
-                      droppableId="citations-list"
-                      direction="vertical"
-                      isDropDisabled={sortOrder !== 'Custom Sort'}
-                      isCombineEnabled={false}
-                      ignoreContainerClipping={true}
-                      type="citation"
-                    >
-                      {(provided) => (
+                    <Droppable droppableId="table" isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={true}>
+                      {(provided, snapshot) => (
                         <TableBody
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          className="text-sm"
+                          className={cn(
+                            "text-sm",
+                            snapshot.isDraggingOver && "bg-muted/50"
+                          )}
                         >
                           {filteredCitations.map((citation, index) => (
                             <Draggable
@@ -1431,13 +1419,12 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   className={cn(
-                                    "border-b transition-colors bg-white",
-                                    snapshot.isDragging ? "bg-muted/50" : "",
-                                    "hover:bg-muted/50"
+                                    "border-b transition-colors hover:bg-muted/50",
+                                    snapshot.isDragging && "bg-muted/50"
                                   )}
                                 >
                                   <TableCell className="w-[30px] pl-4 py-2">
-                                    <div {...provided.dragHandleProps}>
+                                    <div {...provided.dragHandleProps} className="cursor-grab">
                                       <GripVertical className="h-4 w-4" />
                                     </div>
                                   </TableCell>
@@ -1448,7 +1435,8 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleCopyClick(citation.id)}
-                                        className={copiedStates[citation.id] ? 'text-gray-400' : ''}
+                                        className="transition-transform hover:scale-105"
+                                        aria-label="Copy citation"
                                       >
                                         {copiedStates[citation.id] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                       </Button>
@@ -1475,8 +1463,11 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                                                 {pastelColors.map((pastelColor) => (
                                                   <button
                                                     key={pastelColor}
-                                                    className="w-6 h-6 rounded-full"
-                                                    style={{ backgroundColor: pastelColor }}
+                                                    className="w-6 h-6 rounded-full transition-transform hover:scale-105"
+                                                    style={{ 
+                                                      backgroundColor: pastelColor,
+                                                      border: `2px solid ${adjustColorBrightness(pastelColor, -30)}`
+                                                    }}
                                                     onClick={() => handleTagColorChange(tag.id, pastelColor)}
                                                   />
                                                 ))}
@@ -1490,7 +1481,14 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
                                                 >
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
-                                                <Button onClick={() => setEditingTagId(null)} size="sm">Close</Button>
+                                                <Button 
+                                                  onClick={() => setEditingTagId(null)} 
+                                                  size="sm"
+                                                  variant="outline"
+                                                  className="border border-input hover:bg-accent hover:text-accent-foreground px-2 py-0 h-6 text-xs"
+                                                >
+                                                  Close
+                                                </Button>
                                               </div>
                                             </div>
                                           )}
@@ -1554,7 +1552,7 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
       {isAddingCitation && (
         <CitationForm
           onSubmit={(citation: Partial<Citation>) => {
-            handleAddCitation(citation as Omit<Citation, "id" | "order" | "formatted_citation">);
+            handleAddCitation(citation as Omit<Citation, "id" | "updated_at" | "created_at" | "formatted_citation">);
           }}
           onCancel={() => setIsAddingCitation(false)}
           tags={allTags}
@@ -1571,7 +1569,8 @@ const handleCategoryClick = (category: keyof typeof categoryTypeMappings) => {
               ...editingCitation,  // Start with existing citation
               ...updatedCitation,  // Override with updates
               id: editingCitation.id,
-              order: editingCitation.order ?? 0,  // Provide default if undefined
+              updated_at: new Date(),
+              created_at: editingCitation.created_at ?? new Date(),  // Provide default if undefined
               formatted_citation: editingCitation.formatted_citation ?? '',  // Provide default if undefined
               type: updatedCitation.type ?? editingCitation.type  // Ensure type is always defined
             } as Citation);  // Assert as Citation since we've ensured all required fields

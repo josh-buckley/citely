@@ -14,10 +14,10 @@ export function DeleteConfirmationDialog({ isOpen, onClose, onConfirm, title }: 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
-          <DialogTitle>Delete {title}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <p>Are you sure you want to delete this {title.toLowerCase()}? This action cannot be undone.</p>
+        <div className="grid gap-4 py-1">
+          <p>Are you sure you want to delete this citation? This action cannot be undone.</p>
         </div>
         <div className="flex justify-end space-x-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>

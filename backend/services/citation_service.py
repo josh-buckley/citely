@@ -185,25 +185,50 @@ class CitationService:
         """
         Update the tags associated with a citation
         """
-        # Remove existing tag associations
-        self._remove_citation_tags(citation_id)
-        
-        # Add new tag associations
-        if tags:
-            tag_associations = []
-            for tag in tags:
-                # Handle both Tag objects and dict representations
-                tag_id = tag.get('id') if isinstance(tag, dict) else tag.id
-                if tag_id:
-                    tag_associations.append({
-                        'citation_id': citation_id,
-                        'tag_id': tag_id
-                    })
+        try:
+            # Remove existing tag associations
+            self._remove_citation_tags(citation_id)
             
-            if tag_associations:
-                self.supabase.table('citation_tags')\
-                    .insert(tag_associations)\
-                    .execute()
+            # Add new tag associations
+            if tags:
+                tag_associations = []
+                for tag in tags:
+                    # Handle both Tag objects and dict representations
+                    if isinstance(tag, dict):
+                        tag_id = tag.get('id')
+                        if not tag_id and 'name' in tag:
+                            # Create new tag if it doesn't exist
+                            response = self.supabase.table('tags').insert({
+                                'name': tag['name'],
+                                'color': tag.get('color', '#000000')  # Default to black if no color provided
+                            }).execute()
+                            if response.data:
+                                tag_id = response.data[0]['id']
+                    else:
+                        tag_id = getattr(tag, 'id', None)
+                        if not tag_id and hasattr(tag, 'name'):
+                            # Create new tag if it doesn't exist
+                            response = self.supabase.table('tags').insert({
+                                'name': tag.name,
+                                'color': getattr(tag, 'color', '#000000')  # Default to black if no color provided
+                            }).execute()
+                            if response.data:
+                                tag_id = response.data[0]['id']
+                    
+                    if tag_id:
+                        tag_associations.append({
+                            'citation_id': citation_id,
+                            'tag_id': tag_id
+                        })
+                
+                if tag_associations:
+                    self.supabase.table('citation_tags').insert(tag_associations).execute()
+                    
+        except Exception as e:
+            print(f"Error in _update_citation_tags: {str(e)}")
+            print(f"Citation ID: {citation_id}")
+            print(f"Tags: {tags}")
+            raise
 
     def _remove_citation_tags(self, citation_id: str) -> None:
         """
@@ -331,3 +356,42 @@ class CitationService:
             'citation_id': citation_id,
             'tag_id': tag_id
         }).execute()
+
+    def get_citation_tag_associations(self, citation_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all tag associations for a citation
+        """
+        try:
+            response = self.supabase.table('citation_tags')\
+                .select('*')\
+                .eq('citation_id', citation_id)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error getting citation tag associations: {str(e)}")
+            raise
+
+    def create_tag_for_citation(self, citation_id: str, tag_id: int) -> None:
+        """
+        Create a new citation-tag association
+        """
+        try:
+            # First check if the association already exists
+            existing = self.supabase.table('citation_tags')\
+                .select('*')\
+                .eq('citation_id', citation_id)\
+                .eq('tag_id', tag_id)\
+                .execute()
+                
+            if existing.data:
+                print(f"Association between citation {citation_id} and tag {tag_id} already exists")
+                return
+                
+            # Create the association
+            self.supabase.table('citation_tags')\
+                .insert({'citation_id': citation_id, 'tag_id': tag_id})\
+                .execute()
+                
+        except Exception as e:
+            print(f"Error creating citation tag association: {str(e)}")
+            raise

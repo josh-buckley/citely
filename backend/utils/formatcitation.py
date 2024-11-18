@@ -1,10 +1,9 @@
 import datetime
-from datetime import date  # Add this import
+from datetime import date  
 
-# Add this class at the beginning of the file
 class AGLC4Citation:
     def __init__(self):
-        pass  # No need for date field mappings anymore
+        pass  
 
     def normalize_date_fields(self, kwargs):
         """Just return kwargs as-is since we're working with strings"""
@@ -18,7 +17,7 @@ class AGLC4Citation:
             'case_reported': format_case_reported,
             'case_unreported_medium_neutral': format_case_unreported_medium_neutral,
             'case_unreported_no_medium_neutral': format_case_unreported_no_medium_neutral,
-            'legislation': format_legislation,
+            'act': format_legislation,
             'bill': format_bill,
             'explanatory_memorandum': format_explanatory_memorandum,
             'hansard': format_hansard,
@@ -270,6 +269,19 @@ def format_editors(editors):
     else:
         return f"{editors[0]} et al (eds)"
 
+def format_editors_without_suffix(editors):
+    if not editors:
+        return ''
+    if isinstance(editors, str):
+        return editors
+    if len(editors) == 1:
+        return editors[0]
+    if len(editors) == 2:
+        return f"{editors[0]} and {editors[1]}"
+    if len(editors) == 3:
+        return f"{editors[0]}, {editors[1]} and {editors[2]}"
+    return f"{editors[0]} et al"
+
 def format_journal_article(authors=None, title=None, year=None, volume=None, issue=None, journal=None, starting_page=None, pinpoint=None):
     citation = []
     if authors:
@@ -293,7 +305,7 @@ def format_journal_article(authors=None, title=None, year=None, volume=None, iss
 def format_book(authors=None, title=None, publisher=None, edition=None, year=None, volume=None, pinpoint=None):
     citation = []
     if authors:
-        citation.append(format_authors(authors))
+        citation.append(format_authors(authors) + ',')
     if title:
         citation.append(f"<i>'{title}'</i>")
     publication_details = []
@@ -306,12 +318,12 @@ def format_book(authors=None, title=None, publisher=None, edition=None, year=Non
     if publication_details:
         citation.append(f"({', '.join(publication_details)})")
     if volume:
-        citation.append(f"{volume}")
+        citation.append(f"vol {volume}")
     if pinpoint:
         citation.append(str(pinpoint))
     return " ".join(citation)
 
-def format_book_chapter(authors=None, chapter_title=None, editors=None, book_title=None, publisher=None, edition=None, year=None, starting_page=None, pinpoint=None):
+def format_book_chapter(authors=None, chapter_title=None, editors=None, book_title=None, publisher=None, edition=None, year=None, volume=None, starting_page=None, pinpoint=None):
     citation = []
     if authors:
         citation.append(format_authors(authors) + ",")
@@ -331,8 +343,31 @@ def format_book_chapter(authors=None, chapter_title=None, editors=None, book_tit
         publication_details.append(str(year))
     if publication_details:
         citation.append(f"({', '.join(publication_details)})")
+    if volume:
+        citation.append(f"vol {volume}")
     if starting_page:
         citation.append(str(starting_page) + (',' if pinpoint else ''))
+    if pinpoint:
+        citation.append(str(pinpoint))
+    return " ".join(citation)
+
+def format_book_with_editor(authors=None, title=None, editors=None, publisher=None, edition=None, year=None, pinpoint=None):
+    citation = []
+    if authors:
+        citation.append(format_authors(authors))
+    if title:
+        citation.append(f"<i>{title}</i>,")
+    if editors:
+        citation.append(f"ed {format_editors_without_suffix(editors)}")
+    publication_details = []
+    if publisher:
+        publication_details.append(publisher)
+    if edition:
+        publication_details.append(f"{edition} ed")
+    if year:
+        publication_details.append(str(year))
+    if publication_details:
+        citation.append(f"({', '.join(publication_details)})")
     if pinpoint:
         citation.append(str(pinpoint))
     return " ".join(citation)
@@ -626,7 +661,7 @@ def format_submission(party_name=None, title=None, case_name=None, proceeding_nu
     if party_name:
         citation.append(f"{party_name},")
     if title:
-        citation.append(f"'{title}',")
+        citation.append(f"'{title}'")
     if case_name:
         citation.append(f"Submission in <i>{case_name}</i>,")
     if proceeding_number:
@@ -716,27 +751,6 @@ def format_symposium(title=None, year=None, volume=None, issue=None, journal=Non
         citation.append(str(starting_page))
     if pinpoint:
         citation.append(f", {pinpoint}")
-    return " ".join(citation)
-
-def format_book_with_editor(authors=None, title=None, editors=None, publisher=None, edition=None, year=None, pinpoint=None):
-    citation = []
-    if authors:
-        citation.append(format_authors(authors))
-    if title:
-        citation.append(f"<i>{title}</i>,")
-    if editors:
-        citation.append(f"ed {format_editors(editors)}")
-    publication_details = []
-    if publisher:
-        publication_details.append(publisher)
-    if edition:
-        publication_details.append(f"{edition} ed")
-    if year:
-        publication_details.append(str(year))
-    if publication_details:
-        citation.append(f"({', '.join(publication_details)})")
-    if pinpoint:
-        citation.append(str(pinpoint))
     return " ".join(citation)
 
 def format_translated_book(authors=None, translation_title=None, translator=None, publisher=None, edition=None, year=None, pinpoint=None):
@@ -1025,10 +1039,3 @@ def format_delegated_non_government_legislation(issuing_body=None, title=None, f
     if pinpoint:
         citation.append(str(pinpoint))
     return " ".join(citation)
-
-
-
-
-
-
-
