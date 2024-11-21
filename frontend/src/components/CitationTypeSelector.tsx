@@ -22,7 +22,6 @@ export const citationTypes = {
     { value: "case_unreported_no_medium_neutral", label: "Unreported Case (No Medium Neutral)" },
     { value: "proceeding", label: "Proceeding" },
     { value: "court_order", label: "Court Order" },
-    { value: "administrative_decision", label: "Administrative Decision*" },
     { value: "arbitration", label: "Arbitration" },
     { value: "transcript_of_proceedings", label: "Transcript of Proceedings" },
     { value: "high_court_transcript", label: "High Court Transcript" },
@@ -38,7 +37,6 @@ export const citationTypes = {
     { value: "gazette", label: "Gazette" },
     { value: "order_or_ruling", label: "Order or Ruling" },
     { value: "court_practice_direction", label: "Court Practice Direction or Note" },
-    { value: "constitution", label: "Constitution*" },
   ],
   secondarySources: [
     { value: "journal_article", label: "Journal Article" },
@@ -76,7 +74,11 @@ export const citationTypes = {
   ],
   internationalMaterials: [
     { value: "treaty", label: "Treaty" },
-    { value: "...", label: "..." },
+  ],
+  toBeAdded: [
+    { value: "administrative_decision", label: "Administrative Decision" },
+    { value: "constitution", label: "Constitution" },
+    { value: "un_materials", label: "UN Materials" },
   ],
 } as const
 
@@ -198,6 +200,7 @@ export const CitationTypeSelector = memo(function CitationTypeSelector({
               {renderSection("Secondary Sources", citationTypes.secondarySources)}
               {renderSection("Miscellaneous", citationTypes.miscellaneous)}
               {renderSection("International Materials", citationTypes.internationalMaterials)}
+              {renderSection("To be Added", citationTypes.toBeAdded)}
             </div>
           </motion.div>
         </DialogContent>

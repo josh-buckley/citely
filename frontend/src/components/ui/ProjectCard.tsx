@@ -73,6 +73,36 @@ export function ProjectCard({ project, view, onEdit, onDelete, tags }: ProjectCa
     return Array.from(uniqueTags.values());
   };
 
+  function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  function rgbToHex(rgb: { r: number; g: number; b: number }): string {
+    return '#' + [rgb.r, rgb.g, rgb.b]
+      .map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      })
+      .join('');
+  }
+
+  function adjustColorBrightness(color: string, amount: number): string {
+    const rgb = hexToRgb(color);
+    if (!rgb) return color;
+    
+    const newRgb = {
+      r: Math.max(0, Math.min(255, Math.round(rgb.r + amount))),
+      g: Math.max(0, Math.min(255, Math.round(rgb.g + amount))),
+      b: Math.max(0, Math.min(255, Math.round(rgb.b + amount))),
+    };
+    return rgbToHex(newRgb);
+  }
+
   return (
     <>
       <Card className={`${cardClass} cursor-pointer relative`} onClick={handleCardClick}>
@@ -109,15 +139,16 @@ export function ProjectCard({ project, view, onEdit, onDelete, tags }: ProjectCa
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-1 mt-4">
             {tags.length > 0 ? (
               getUniqueTags(tags).map((tag) => (
                 <Badge
                   key={tag.name}
                   variant="outline"
+                  className="flex items-center space-x-0"
                   style={{
                     backgroundColor: tag.color,
-                    color: 'black',
+                    color: adjustColorBrightness(tag.color, -100),
                     border: 'none',
                   }}
                 >
@@ -125,7 +156,7 @@ export function ProjectCard({ project, view, onEdit, onDelete, tags }: ProjectCa
                 </Badge>
               ))
             ) : (
-              <Badge variant="outline" className="bg-gray-200 text-gray-600">
+              <Badge variant="outline" className="flex items-center space-x-0 bg-gray-200 text-gray-600">
                 No tags
               </Badge>
             )}

@@ -1,4 +1,39 @@
 export const reportedDecisionsRules = {
+    caseName: {
+      title: "Case Name",
+      rules: [
+        "Write case names in italics.",
+        "Use 'v' (not 'vs' or 'versus') between party names.",
+        "For criminal cases:",
+        "- Use 'R v' for Crown prosecutions.",
+        "- Use 'DPP v' for Director of Public Prosecutions.",
+        "For civil cases:",
+        "- Use party names as they appear in the report.",
+        "- Omit given names unless needed to avoid ambiguity.",
+        "- Include business suffixes (Pty Ltd, Inc, etc).",
+        "For multiple parties:",
+        "- Use only first party on each side.",
+        "- Add '[No 2]' etc for subsequent decisions between same parties."
+      ],
+      examples: [
+        {
+          correct: "<i>Smith v Jones</i>",
+          explanation: "Basic civil case format."
+        },
+        {
+          correct: "<i>R v Thompson</i>",
+          explanation: "Criminal case format."
+        },
+        {
+          correct: "<i>Woolworths Ltd v Smith</i>",
+          explanation: "Company name with suffix."
+        },
+        {
+          correct: "<i>Jones v Smith [No 2]</i>",
+          explanation: "Subsequent decision indicator."
+        }
+      ]
+    },
     yearAndVolume: {
       title: "Year and Volume",
       rules: [
@@ -29,12 +64,15 @@ export const reportedDecisionsRules = {
     lawReportSeries: {
       title: "Law Report Series",
       rules: [
-        "Use authorised version where available.",
-        "Follow citation preference order (from highest to lowest):",
         "Do not use parallel citations.",
-        "Report series names should not be italicised.",
-        "Use standard abbreviations per appendix A.",
-        "Write out series names in full if not in appendix A."
+        "Follow citation preference order (from highest to lowest). Write out series names in full if acronym not know:",
+      ],
+      citationOrderTable: [
+        { version: "Authorised report", examples: "CLR, FCR, VR, NSWLR" },
+        { version: "Generalist unauthorised report", examples: "ALR, ALJR, FLR, ACTR" },
+        { version: "Subject-specific unauthorised report", examples: "A Crim R, ACSR, IR, IPR" },
+        { version: "Unreported (medium neutral citation)", examples: "HCA, FCA, NSWSC, VSC" },
+        { version: "Unreported (no medium neutral citation)", examples: "See that citation type." }
       ],
       examples: [
         {
@@ -148,6 +186,49 @@ export const reportedDecisionsRules = {
         {
           correct: "<i>Borg v Commissioner, Department of Corrective Services</i> (2002) EOC 93-198",
           explanation: "Unique reference citation."
+        }
+      ]
+    },
+    pinpointReference: {
+      title: "Pinpoint References",
+      rules: [
+        "A pinpoint reference refers to a specific page, paragraph, footnote or section of a source.",
+        "Basic formatting:",
+        "- Do not use 'p', 'pg', or 'at' before the reference",
+        "- Separate multiple references with commas",
+        "Paragraph references:",
+        "- Use square brackets around paragraph numbers",
+        "- Do not use 'para' prefix (except for legislative materials)",
+        "- If both page and paragraph, format as: Page [Paragraph]",
+        "Sources without page numbers:",
+        "- Use paragraph numbers only",
+        "- Applies to looseleaf services, unreported judgments, legal encyclopedias",
+        "Spans of references:",
+        "- Use non-spaced en-dash (–)",
+        "- Pages: 431–2",
+        "- Paragraphs: [57]–[63]",
+        "- Pages and paragraphs: 312–13 [5]–[11]",
+        "- Footnotes: 466 nn 7–8",
+        "Shortening rules:",
+        "- Shorten page spans (eg '121–7')",
+        "- Keep full paragraph numbers in brackets (eg '[56]–[59]')"
+      ],
+      examples: [
+        {
+          correct: "<i>Agius v South Australia [No 6]</i> [2018] FCA 358, [90]–[97] (Mortimer J)",
+          explanation: "Paragraph span with square brackets."
+        },
+        {
+          correct: "<i>City of Swan v Lehman Brothers Australia Ltd</i> (2009) 179 FCR 243, 262–5 [50]–[59] (Rares J)",
+          explanation: "Combined page and paragraph spans with correct shortening."
+        },
+        {
+          correct: "<i>Wurridjal v Commonwealth</i> (2009) 237 CLR 309, 389–90 [196]–[197]",
+          explanation: "Page span with full paragraph numbers."
+        },
+        {
+          correct: "<i>HLA Hart, The Concept of Law</i> (Clarendon Press, 1970) 15 n 7",
+          explanation: "Single page with footnote reference."
         }
       ]
     },

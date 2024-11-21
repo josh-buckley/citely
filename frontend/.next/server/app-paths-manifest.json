@@ -1,4 +1,5 @@
 {
-  "/projects/[project_id]/citations/page": "app/projects/[project_id]/citations/page.js",
-  "/projects/page": "app/projects/page.js"
+  "/landing/page": "app/landing/page.js",
+  "/projects/page": "app/projects/page.js",
+  "/projects/[project_id]/citations/page": "app/projects/[project_id]/citations/page.js"
 }

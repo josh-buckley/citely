@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 import { basicRules, specialPartyRules, advancedRules } from "../../lib/caseName";
 import { reportedDecisionsRules } from "../../lib/reportedDecisions";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
+import { RulesTable } from "../ui/rules-table";
 import { useState } from "react";
 
 interface ReportedDecisionRulesProps {
@@ -323,6 +324,17 @@ export function ReportedDecisionRules({ activeField }: ReportedDecisionRulesProp
               }
             })}
           </div>
+          <div className="mt-6">
+            {reportedDecisionsRules.lawReportSeries.citationOrderTable && (
+              <RulesTable 
+                headers={["Version", "Examples"]}
+                rows={reportedDecisionsRules.lawReportSeries.citationOrderTable.map(item => ({
+                  version: item.version,
+                  examples: item.examples
+                }))}
+              />
+            )}
+          </div>
           <div className="mt-4 space-y-3">
             {reportedDecisionsRules.lawReportSeries.examples.map((example, index) => (
               <div key={index} className="space-y-2">
@@ -405,6 +417,58 @@ export function ReportedDecisionRules({ activeField }: ReportedDecisionRulesProp
   if (activeField === 'pinpoint') {
     return (
       <>
+        {/* General Pinpoint Reference Rules */}
+        <Card className="mb-4">
+          <CardHeader className="py-4 pb-2">
+            <CardTitle>{reportedDecisionsRules.pinpointReference.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="space-y-2">
+              {groupRules(formatRules(reportedDecisionsRules.pinpointReference.rules)).map((group, groupIndex) => {
+                switch (group.type) {
+                  case 'regular':
+                    return group.items.map((text, index) => (
+                      <div key={`${groupIndex}-${index}`} className="text-sm">
+                        {parseItalics(text)}
+                      </div>
+                    ));
+                  case 'bullet':
+                    return (
+                      <ul key={groupIndex} className="list-disc pl-6 space-y-1">
+                        {group.items.map((text, index) => (
+                          <li key={`${groupIndex}-${index}`} className="text-sm">
+                            {parseItalics(text)}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  case 'number':
+                    return (
+                      <ol key={groupIndex} className="list-decimal pl-6 space-y-1">
+                        {group.items.map((text, index) => (
+                          <li key={`${groupIndex}-${index}`} className="text-sm">
+                            {parseItalics(text)}
+                          </li>
+                        ))}
+                      </ol>
+                    );
+                }
+              })}
+            </div>
+            <div className="mt-4 space-y-3">
+              {reportedDecisionsRules.pinpointReference.examples.map((example, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="text-sm bg-green-100 text-green-800 p-2 rounded-lg flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-800" />
+                    {parseItalics(example.correct)}
+                  </div>
+                  <div className="text-sm text-gray-500">{example.explanation}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Court */}
         <Card className="mb-4">
           <CardHeader className="py-4 pb-2">
@@ -494,6 +558,15 @@ export function ReportedDecisionRules({ activeField }: ReportedDecisionRulesProp
                     );
                 }
               })}
+            </div>
+            <div className="mt-4">
+              <RulesTable
+                headers={["Judicial Office", "Abbreviation"]}
+                rows={reportedDecisionsRules.pinpointJudges.judicialOfficers.map(item => ({
+                  office: item.office,
+                  abbreviation: item.abbreviation
+                }))}
+              />
             </div>
             <div className="mt-4 space-y-3">
               {reportedDecisionsRules.pinpointJudges.examples.map((example, index) => (
@@ -717,6 +790,71 @@ export function ReportedDecisionRules({ activeField }: ReportedDecisionRulesProp
           </CardContent>
         </Card>
       </>
+    );
+  }
+
+  // Handle judge rules
+  if (activeField === 'judge') {
+    return (
+      <Card className="mb-4">
+        <CardHeader className="py-4 pb-2">
+          <CardTitle>{reportedDecisionsRules.pinpointJudges.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          <div className="space-y-2">
+            {groupRules(formatRules(reportedDecisionsRules.pinpointJudges.rules)).map((group, groupIndex) => {
+              switch (group.type) {
+                case 'regular':
+                  return group.items.map((text, index) => (
+                    <div key={`${groupIndex}-${index}`} className="text-sm">
+                      {parseItalics(text)}
+                    </div>
+                  ));
+                case 'bullet':
+                  return (
+                    <ul key={groupIndex} className="list-disc pl-6 space-y-1">
+                      {group.items.map((text, index) => (
+                        <li key={`${groupIndex}-${index}`} className="text-sm">
+                          {parseItalics(text)}
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                case 'number':
+                  return (
+                    <ol key={groupIndex} className="list-decimal pl-6 space-y-1">
+                      {group.items.map((text, index) => (
+                        <li key={`${groupIndex}-${index}`} className="text-sm">
+                          {parseItalics(text)}
+                        </li>
+                      ))}
+                    </ol>
+                  );
+              }
+            })}
+          </div>
+          <div className="mt-4">
+            <RulesTable
+              headers={["Judicial Office", "Abbreviation"]}
+              rows={reportedDecisionsRules.pinpointJudges.judicialOfficers.map(item => ({
+                office: item.office,
+                abbreviation: item.abbreviation
+              }))}
+            />
+          </div>
+          <div className="mt-4 space-y-3">
+            {reportedDecisionsRules.pinpointJudges.examples.map((example, index) => (
+              <div key={index} className="space-y-2">
+                <div className="text-sm bg-green-100 text-green-800 p-2 rounded-lg flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-800" />
+                  {parseItalics(example.correct)}
+                </div>
+                <div className="text-sm text-gray-500">{example.explanation}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

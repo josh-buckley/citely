@@ -25,15 +25,11 @@ import { BookOpen, FileText, Gavel, Search, PlusCircle, Edit, Trash2, Copy, X, S
 import { toast } from "../../../../components/ui/toast"
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { GripVertical } from 'lucide-react'
-import DOMPurify from 'dompurify';
-import { format } from 'date-fns';
-import { cva } from "class-variance-authority"
 import { CitationDialogs } from '../../../../components/CitationDialogs';
 import { cn } from "../../../../lib/utils"; // Make sure this import exists
 import { Project } from '../../../../types/project';
 import { useParams } from 'next/navigation';
 import { DeleteConfirmationDialog } from '../../../../components/DeleteConfirmationDialog';
-import { ArrowUpDown } from "lucide-react"
 import NumberFlow from '@number-flow/react';
 import { citationTypes } from '../../../../components/CitationTypeSelector'; // Move the citationTypes object to a shared location
 import { supabase } from '../../../../lib/supabase';
@@ -831,15 +827,12 @@ export default React.memo(function CitationManager() {
   
   // Modified onDragEnd function
   const onDragEnd = async (result: DropResult) => {
-    const { destination, source, reason } = result;
+    const { destination, source } = result;
     setIsDragging(false);
 
-    // Not a thing to do...
-    if (!destination || reason === 'CANCEL') {
-      return;
-    }
+    if (!destination) return;
 
-    // Did not move anywhere - can bail early
+    // Don't do anything if dropped in same location
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
@@ -847,18 +840,37 @@ export default React.memo(function CitationManager() {
       return;
     }
 
-    // Create a new array with the updated order
-    const newCitations = Array.from(citations);
-    const [movedCitation] = newCitations.splice(source.index, 1);
-    newCitations.splice(destination.index, 0, movedCitation);
-
     try {
-      setCitations(newCitations);
+      // Create new array of filtered citations
+      const newFilteredCitations = Array.from(filteredCitations);
+      const [removed] = newFilteredCitations.splice(source.index, 1);
+      newFilteredCitations.splice(destination.index, 0, removed);
+
+      // Update filtered citations immediately for smooth UI
+      setFilteredCitations(newFilteredCitations);
+
+      // Update the main citations array
+      const sourceId = filteredCitations[source.index].id;
+      const destinationId = filteredCitations[destination.index].id;
+
+      setCitations(prevCitations => {
+        const newCitations = [...prevCitations];
+        const sourceIndex = newCitations.findIndex(c => c.id === sourceId);
+        const destinationIndex = newCitations.findIndex(c => c.id === destinationId);
+
+        const [removed] = newCitations.splice(sourceIndex, 1);
+        newCitations.splice(destinationIndex, 0, removed);
+
+        return newCitations;
+      });
+
       toast.success("Citations reordered successfully");
     } catch (error) {
-      console.error('Error saving new order:', error);
-      toast.error("Error saving new order");
-      setCitations(citations);
+      console.error('Error reordering citations:', error);
+      toast.error("Failed to reorder citations");
+      
+      // Revert to original order
+      setFilteredCitations(filteredCitations);
     }
   };
 
@@ -1033,8 +1045,8 @@ export default React.memo(function CitationManager() {
       <main className="flex-1 w-full pl-[-16px] pr-[64px] sm:pl-[-8px] sm:pr-[72px] lg:pl-0 lg:pr-[80px]">
         <div className="h-full w-full grid gap-0 md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
           <aside className="hidden md:flex flex-col w-full lg:w-[250px] border-r border-gray-200 pr-0 pl-5">
-            <ScrollArea className="h-[calc(100vh-8rem)]">
-              <div className="space-y-4 py-4">
+            <div className="py-4">
+              <div className="space-y-4">
                 <div className="px-3 py-2">
                   <h2 className="mb-2 px-0 text-lg font-semibold tracking-tight">
                     Citation Types
@@ -1113,7 +1125,7 @@ export default React.memo(function CitationManager() {
                   </div>
                 </div>
               </div>
-            </ScrollArea>
+            </div>
           </aside>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -1149,7 +1161,7 @@ export default React.memo(function CitationManager() {
                 variant="ghost"
                 className="p-0 h-auto hover:bg-transparent"
                 onClick={() => {
-                  const typesInCategory = categoryTypeMappings.cases;
+                  const typesInCategory = [...categoryTypeMappings.cases] as CitationType[];
                   setSelectedTypes(prevTypes => {
                     const allTypesInCategorySelected = typesInCategory.every(type =>
                       prevTypes.includes(type)
@@ -1331,7 +1343,7 @@ export default React.memo(function CitationManager() {
                     const categoryName = getCategoryName(selectedTypes);
                     if (categoryName) {
                       return (
-                        <Badge variant="secondary" className="flex items-center space-x-1 flex-shrink-0">
+                        <Badge variant="secondary" className="flex items-center space-x-0.5 flex-shrink-0">
                           <span>{categoryName}</span>
                           <Button
                             variant="ghost"
@@ -1345,7 +1357,7 @@ export default React.memo(function CitationManager() {
                       );
                     }
                     return selectedTypes.map(type => (
-                      <Badge key={type} variant="secondary" className="flex items-center space-x-1 flex-shrink-0">
+                      <Badge key={type} variant="secondary" className="flex items-center space-x-0.5 flex-shrink-0">
                         <span>{getFriendlyTypeName(type)}</span>
                         <Button
                           variant="ghost"
@@ -1359,7 +1371,7 @@ export default React.memo(function CitationManager() {
                     ));
                   })()}
                   {selectedTags.map(tag => (
-                    <Badge key={tag.id} variant="secondary" className={`flex items-center space-x-1 ${tagColors[tag.id] ?? ''}`}>
+                    <Badge key={tag.id} variant="secondary" className={`flex items-center space-x-0 ${tagColors[tag.id] ?? ''}`}>
                       <span>{tag.name}</span>
                       <Button
                         variant="ghost"
@@ -1372,7 +1384,7 @@ export default React.memo(function CitationManager() {
                     </Badge>
                   ))}
                   {searchTerm && (
-                    <Badge variant="secondary" className="flex items-center space-x-1">
+                    <Badge variant="secondary" className="flex items-center space-x-0">
                       <span>Search: {searchTerm}</span>
                       <Button
                         variant="ghost"
@@ -1387,7 +1399,7 @@ export default React.memo(function CitationManager() {
                 </div>
               )}
               <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
-                <div className="relative">
+                <div className="relative overflow-hidden">
                   <Table className="border-collapse border-spacing-0">
                     <TableHeader>
                       <TableRow className="border-b hover:bg-transparent">
@@ -1398,33 +1410,46 @@ export default React.memo(function CitationManager() {
                         <TableHead className="text-sm"></TableHead>
                       </TableRow>
                     </TableHeader>
-                    <Droppable droppableId="table" isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={true}>
+                    <Droppable 
+                      droppableId="citations-table"
+                      isDropDisabled={false}
+                      isCombineEnabled={false}
+                      ignoreContainerClipping={true}
+                    >
                       {(provided, snapshot) => (
                         <TableBody
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={cn(
-                            "text-sm",
+                            "relative",
                             snapshot.isDraggingOver && "bg-muted/50"
                           )}
                         >
                           {filteredCitations.map((citation, index) => (
                             <Draggable
                               key={citation.id}
-                              draggableId={citation.id}
+                              draggableId={String(citation.id)}
                               index={index}
+                              isDragDisabled={false}
                             >
                               {(provided, snapshot) => (
                                 <TableRow
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   className={cn(
-                                    "border-b transition-colors hover:bg-muted/50",
-                                    snapshot.isDragging && "bg-muted/50"
+                                    "border-b transition-colors",
+                                    snapshot.isDragging ? "bg-accent !border-primary" : "hover:bg-muted/50",
+                                    isDragging && "cursor-grabbing"
                                   )}
                                 >
                                   <TableCell className="w-[30px] pl-4 py-2">
-                                    <div {...provided.dragHandleProps} className="cursor-grab">
+                                    <div 
+                                      {...provided.dragHandleProps}
+                                      className={cn(
+                                        "cursor-grab active:cursor-grabbing",
+                                        snapshot.isDragging && "cursor-grabbing"
+                                      )}
+                                    >
                                       <GripVertical className="h-4 w-4" />
                                     </div>
                                   </TableCell>
@@ -1450,12 +1475,24 @@ export default React.memo(function CitationManager() {
                                       {citation.tags && citation.tags.map((tag) => (
                                         <div key={tag.id} className="relative inline-block">
                                           <Badge
-                                            variant="outline"
-                                            className="cursor-pointer text-xs"
-                                            style={{ backgroundColor: tag.color }}
+                                            variant="secondary"
+                                            className="cursor-pointer"
+                                            style={{
+                                              backgroundColor: tag.color,
+                                              color: adjustColorBrightness(tag.color, -100)
+                                            }}
                                             onClick={() => setEditingTagId({ citationId: citation.id, tagId: tag.id })}
                                           >
                                             {tag.name}
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleTagDelete(citation.id, tag.id);
+                                              }}
+                                              className="ml-1 hover:text-red-500"
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
                                           </Badge>
                                           {editingTagId?.citationId === citation.id && editingTagId?.tagId === tag.id && (
                                             <div className="absolute z-10 mt-2 w-48 p-2 bg-white rounded-md shadow-lg">
@@ -1468,19 +1505,14 @@ export default React.memo(function CitationManager() {
                                                       backgroundColor: pastelColor,
                                                       border: `2px solid ${adjustColorBrightness(pastelColor, -30)}`
                                                     }}
-                                                    onClick={() => handleTagColorChange(tag.id, pastelColor)}
+                                                    onClick={() => {
+                                                      handleTagColorChange(tag.id, pastelColor);
+                                                      setEditingTagId(null);
+                                                    }}
                                                   />
                                                 ))}
                                               </div>
-                                              <div className="flex justify-between items-center">
-                                                <Button 
-                                                  variant="ghost" 
-                                                  size="sm" 
-                                                  onClick={() => handleTagDelete(citation.id, tag.id)}
-                                                  className="text-red-500 hover:text-red-700"
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                              <div className="flex justify-end">
                                                 <Button 
                                                   onClick={() => setEditingTagId(null)} 
                                                   size="sm"

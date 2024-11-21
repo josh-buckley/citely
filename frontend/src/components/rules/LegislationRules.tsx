@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { legislationRules } from "../../lib/legislation";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
+import { RulesTable } from "../ui/rules-table";
 
 interface LegislationRulesProps {
   activeField: string;
@@ -48,34 +49,16 @@ export function LegislationRules({ activeField }: LegislationRulesProps) {
                 }
               })}
             </div>
-            <div className="mt-6">
-              <div className="rounded-md border">
-                <table className="w-full caption-bottom text-sm">
-                  <thead className="[&_tr]:border-b bg-muted">
-                    <tr>
-                      <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Designation
-                      </th>
-                      <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Abbreviation
-                      </th>
-                      <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Plural
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="[&_tr:last-child]:border-0">
-                    {legislationRules.pinpoint.designationTable.map((item, index) => (
-                      <tr key={index} className="border-b transition-colors hover:bg-muted/50">
-                        <td className="p-4 align-middle">{item.designation}</td>
-                        <td className="p-4 align-middle">{item.abbreviation}</td>
-                        <td className="p-4 align-middle">{item.plural}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {legislationRules.pinpoint.designationTable && (
+              <RulesTable 
+                headers={["Designation", "Abbreviation", "Plural"]}
+                rows={legislationRules.pinpoint.designationTable.map(item => ({
+                  designation: item.designation,
+                  abbreviation: item.abbreviation,
+                  plural: item.plural
+                }))}
+              />
+            )}
             <div className="mt-4 space-y-3">
               {legislationRules.pinpoint.examples.map((example, index) => (
                 <div key={index} className="space-y-2">
@@ -370,30 +353,15 @@ export function LegislationRules({ activeField }: LegislationRulesProps) {
               }
             })}
           </div>
-          <div className="mt-6">
-            <div className="rounded-md border">
-              <table className="w-full caption-bottom text-sm">
-                <thead className="[&_tr]:border-b bg-muted">
-                  <tr>
-                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Jurisdiction
-                    </th>
-                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Abbreviation
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="[&_tr:last-child]:border-0">
-                  {legislationRules.jurisdiction.jurisdictionTable.map((item, index) => (
-                    <tr key={index} className="border-b transition-colors hover:bg-muted/50">
-                      <td className="p-4 align-middle">{item.jurisdiction}</td>
-                      <td className="p-4 align-middle">{item.abbreviation}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {legislationRules.jurisdiction.jurisdictionTable && (
+            <RulesTable 
+              headers={["Jurisdiction", "Abbreviation"]}
+              rows={legislationRules.jurisdiction.jurisdictionTable.map(item => ({
+                jurisdiction: item.jurisdiction,
+                abbreviation: item.abbreviation
+              }))}
+            />
+          )}
           <div className="mt-4 space-y-3">
             {legislationRules.jurisdiction.examples.map((example, index) => (
               <div key={index} className="space-y-2">

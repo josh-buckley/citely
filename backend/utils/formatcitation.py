@@ -534,9 +534,9 @@ def format_printed_newspaper(author=None, title=None, newspaper=None, place=None
     if place and date:
         citation.append(f"({place}, {format_date(full_date)})")
     if starting_page:
-        citation.append(str(starting_page) + (',' if pinpoint else ''))
+        citation.append(f"{starting_page}")
     if pinpoint:
-        citation.append(str(pinpoint))
+        citation.append(f", {pinpoint}")
     return " ".join(citation)
 
 def format_internet_materials_author(author=None, document_title=None, web_page_title=None, document_type=None, full_date=None, pinpoint=None, url=None):
@@ -609,19 +609,37 @@ def format_arbitration(case_name=None, award_description=None, forum=None, case_
     citation = []
     if case_name:
         citation.append(f"<i>{case_name}</i>")
-    if award_description or forum or case_award_number or date:
-        arb_info = []
+        # If case name exists, put other elements in parentheses
+        if award_description or forum or case_award_number or full_date:
+            arb_info = []
+            if award_description:
+                arb_info.append(award_description)
+            if forum:
+                arb_info.append(forum)
+            if case_award_number:
+                arb_info.append(case_award_number)
+            if full_date:
+                arb_info.append(format_date(full_date))
+            citation.append(f"({', '.join(arb_info)})")
+            if pinpoint:
+                # No punctuation between parentheses and pinpoint when case name exists
+                citation.append(str(pinpoint))
+    else:
+        # If no case name, add elements with commas but without parentheses
+        elements = []
         if award_description:
-            arb_info.append(award_description)
+            elements.append(award_description)
         if forum:
-            arb_info.append(forum)
+            elements.append(forum)
         if case_award_number:
-            arb_info.append(case_award_number)
+            elements.append(case_award_number)
         if full_date:
-            arb_info.append(format_date(full_date))
-        citation.append(f"({', '.join(arb_info)})")
-    if pinpoint:
-        citation.append(str(pinpoint))
+            elements.append(format_date(full_date))
+        if elements:
+            citation.append(', '.join(elements))
+            if pinpoint:
+                # Add comma before pinpoint when no case name
+                citation.append(f", {pinpoint}")
     return " ".join(citation)
 
 def format_transcript_of_proceedings(case_name=None, court=None, proceeding_number=None, judicial_officers=None, full_date=None, pinpoint=None):
@@ -648,7 +666,7 @@ def format_high_court_transcript(case_name=None, year=None, number=None, pinpoin
     if case_name:
         citation.append(f"<i>{case_name}</i>")
     if year:
-        citation.append(f"{year}")
+        citation.append(f"[{year}]")
     citation.append("HCATrans")
     if number:
         citation.append(str(number))

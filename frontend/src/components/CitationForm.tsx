@@ -14,6 +14,10 @@ import { CitationPreview } from './CitationPreview'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { generatePreviewText } from './CitationPreview'
+import { TranscriptRules } from "./rules/TranscriptRules";
+import { UnreportedDecisionRules } from "./rules/UnreportedDecisionRules";
+import { UnreportedNoMediumNeutralRules } from "./rules/UnreportedNoMediumNeutralRules";
+import { HighCourtTranscriptRules } from "./rules/HighCourtTranscriptRules";
 
 interface CitationFormProps {
   onSubmit: (citation: Omit<Citation, 'id' | 'project_id' | 'createdAt' | 'updatedAt'>) => void;
@@ -212,14 +216,6 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
               {renderInput('case_name', 'Case Name')}
               {renderInput('court', 'Court')}
               {renderInput('proceeding_number', 'Proceeding Number')}
-              <div className="space-y-2">
-                <Label>Full Date of Court Order</Label>
-                <FlexibleDateInput
-                  label="Full Date of Court Order"
-                  value={formData.full_date ?? ''}
-                  onChange={(value) => handleDateChange('full_date', value)}
-                />
-              </div>
             </div>
           );
 
@@ -1531,7 +1527,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             onBlur={handleBlur}
             className="flex-1"
           />
-          {fieldName.includes('year') && (formData.type !== 'act' && formData.type !== 'delegated_legislation' && formData.type !== 'bill' && formData.type !== 'book' && formData.type !== 'book_chapter' && formData.type !== 'book_with_editor' && formData.type !== 'translated_book' && formData.type !== 'audiobook') && (
+          {fieldName.includes('year') && (formData.type !== 'act' && formData.type !== 'delegated_legislation' && formData.type !== 'bill' && formData.type !== 'book' && formData.type !== 'book_chapter' && formData.type !== 'book_with_editor' && formData.type !== 'translated_book' && formData.type !== 'audiobook' && formData.type !== 'high_court_transcript') && (
             <>
               <Button
                 type="button"
@@ -1581,7 +1577,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-6 flex-1 min-h-0">
-          <div className="space-y-4 overflow-y-auto px-4">
+          <div className="space-y-4 overflow-y-auto px-4 pb-4">
             <CitationTypeSelector
               value={formData.type}
               onChange={handleTypeChange}

@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Header from './components/Header';
 import CitationManager from './app/projects/[project_id]/citations/page';
 import Home from './app/home/page';
-import LandingPage from './app/landing/page';
+import LandingPage from './app/landing/oldpage';
 import ProjectsPage from './app/projects/page';
 import DocumentEditor from './app/document-editor/page';
 import { QueryClient, QueryClientProvider } from 'react-query';

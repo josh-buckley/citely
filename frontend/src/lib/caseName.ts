@@ -1,5 +1,5 @@
 export const basicRules = {
-    title: "Parties' Names — General Rule",
+    title: "Case Name",
     rules: [
       "A citation to an Australian case should generally include the parties' names (as they appear on the first page of the decision) in italics except:",
       "- Full stops should not be used in abbreviations.",

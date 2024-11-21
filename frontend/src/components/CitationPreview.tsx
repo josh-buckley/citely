@@ -20,6 +20,7 @@ const getFieldPlaceholder = (fieldName: string): string => {
     court: 'Court',
     judge: 'Judge(s)',
     full_date: 'Full Date',
+    numner: 'Number',
     
     // Common fields
     title: 'Title',
@@ -882,7 +883,7 @@ export const generatePreviewText = (type: string, formData: any): string => {
       }
 
       if (getValue('year') !== getFieldPlaceholder('year')) {
-        elements.push(getValue('year'));
+        elements.push('[' + getValue('year') + ']');
       }
 
       elements.push('HCATrans');
