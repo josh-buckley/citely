@@ -53,7 +53,7 @@ export default function Features() {
           <h2 className="text-3xl font-bold text-gray-900">
             Everything you need for perfect AGLC4 citations
           </h2>
-          <p className="mt-4 text-Ll text-gray-600">
+          <p className="mt-4 text-lg text-gray-600">
             Powerful features for law students, academics and legal professionals
           </p>
         </motion.div>

@@ -51,19 +51,13 @@ class AGLC4Citation:
             'audiobook': format_audiobook,
             'research_paper': format_research_paper,
             'speech': format_speech,
-            'press_release': format_press_release,
+            'press_and_media_release': format_press_release,
             'periodical': format_periodical,
             'interview': format_interview,
             'film_television_media': format_film_television_media,
             'social_media_post': format_social_media_post,
-            'written_submission': format_written_submission,
-            'evidence_to_parliamentary_committee': format_evidence_to_parliamentary_committee,
-            'constitutional_convention_debates': format_constitutional_convention_debates,
-            'intellectual_property_material': format_intellectual_property_material,
-            'constitutive_document': format_constitutive_document,
             'written_correspondence': format_written_correspondence,
-            'treaty': format_treaty,
-            'delegated_non_government_legislation': format_delegated_non_government_legislation,
+            'custom': format_custom,
         }
         
         if citation_type not in formatting_functions:
@@ -1057,3 +1051,11 @@ def format_delegated_non_government_legislation(issuing_body=None, title=None, f
     if pinpoint:
         citation.append(str(pinpoint))
     return " ".join(citation)
+
+def format_custom(formatted_citation=None):
+    """
+    Format a custom citation by returning the exact text provided in formatted_citation
+    """
+    if not formatted_citation:
+        return ""
+    return formatted_citation

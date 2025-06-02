@@ -33,8 +33,8 @@ module.exports = {
       animation: {
         "float": "float 3s ease-in-out infinite",
         "float-delay": "float 3s ease-in-out 1s infinite",
-        "fade-up": "fade-up 0.6s ease-out forwards",
-        "fade-up-delay": "fade-up 0.6s ease-out 0.3s forwards",
+        "fade-up": "fade-up 0.3s ease-out forwards",
+        "fade-up-delay": "fade-up 0.3s ease-out 0.15s forwards",
       }
     },
   },

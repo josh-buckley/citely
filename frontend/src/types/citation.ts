@@ -47,12 +47,14 @@ export type CitationType =
   | 'intellectual_property'
   | 'constitutive_document'
   | 'written_correspondence'
-  | 'delegated_non_government_legislation';
+  | 'delegated_non_government_legislation'
+  | 'custom';
 
 export interface Citation {
   id: string;
   project_id?: string;
   type: CitationType;
+  source?: string;
   
   // Common fields
   title?: string;

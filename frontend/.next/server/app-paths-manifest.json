@@ -1,5 +1,8 @@
 {
-  "/landing/page": "app/landing/page.js",
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/projects/[project_id]/citations/page": "app/projects/[project_id]/citations/page.js",
+  "/page": "app/page.js",
+  "/landing/onboarding/page": "app/landing/onboarding/page.js",
   "/projects/page": "app/projects/page.js",
-  "/projects/[project_id]/citations/page": "app/projects/[project_id]/citations/page.js"
+  "/landing/page": "app/landing/page.js"
 }

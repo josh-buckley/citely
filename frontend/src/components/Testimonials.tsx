@@ -60,10 +60,8 @@ export default function Testimonials() {
             Trusted Across the Legal Community
           </h2>
           <div className="flex items-center justify-center mt-4 space-x-2">
-            <div className="flex items-center space-x-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-[#FFD700] text-[#FFD700]" />
-              ))}
+            <div className="flex items-center">
+              <Award className="h-6 w-6 text-yellow-500" />
             </div>
             <p className="text-lg font-medium text-gray-700">
               <b>97.9%</b> 5-star ratings from verified users

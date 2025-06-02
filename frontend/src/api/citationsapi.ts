@@ -77,6 +77,7 @@ export const updateCitation = async (citation: Citation): Promise<Citation> => {
     const response = await axios.put(`${API_URL}/citations/${citation.id}`, {
       ...citation,
       project_id: citation.project_id,
+      source: citation.source ?? null,  
       editors: Array.isArray(citation.editors) ? citation.editors : citation.editors ? [citation.editors] : [],
       tags: citation.tags?.map(tag => ({
         id: tag.id,
@@ -288,5 +289,32 @@ export const removeTagFromCitation = async (citationId: string, tagId: string): 
       console.error('Non-Axios error:', error);
     }
     throw error;
+  }
+};
+
+export interface ExtractionResponse {
+  citation_type: string;
+  fields: Record<string, any>;
+}
+
+export const extractCitation = async (sourceType: string, text: string): Promise<ExtractionResponse> => {
+  try {
+    const response = await axios.post(`${API_URL}/citations/extract`, {
+      source_type: sourceType,
+      text
+    });
+
+    if (!response.data) {
+      throw new Error('No data received from server');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error extracting citation:', error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to extract citation: ${error.message}`);
+    } else {
+      throw new Error('Failed to extract citation: Unknown error');
+    }
   }
 };

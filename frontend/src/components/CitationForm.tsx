@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
+import { Textarea } from "./ui/textarea"
 import { Label } from "./ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "./ui/dialog"
@@ -9,15 +10,25 @@ import { Citation, CitationType, Tag } from '../types/citation'
 import { FlexibleDateInput } from './ui/FlexibleDateInput'
 import { toast } from "./ui/toast"
 import { CitationRules } from './CitationRules'
-import { CitationTypeSelector } from './CitationTypeSelector'
+import { CitationTypeSelector, citationTypes } from './CitationTypeSelector'
 import { CitationPreview } from './CitationPreview'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { generatePreviewText } from './CitationPreview'
-import { TranscriptRules } from "./rules/TranscriptRules";
-import { UnreportedDecisionRules } from "./rules/UnreportedDecisionRules";
-import { UnreportedNoMediumNeutralRules } from "./rules/UnreportedNoMediumNeutralRules";
-import { HighCourtTranscriptRules } from "./rules/HighCourtTranscriptRules";
+import { extractCitation } from '../api/citationsapi'
+import { Editor, EditorState, RichUtils, convertToRaw, convertFromRaw } from 'draft-js';
+import 'draft-js/dist/Draft.css';
+
+// Add custom styles for the Draft.js editor
+const editorStyles = {
+  editor: {
+    fontFamily: 'inherit',
+    fontSize: '0.875rem',
+    lineHeight: '1.25rem',
+    color: 'rgb(55 65 81)',
+    outline: 'none'
+  }
+};
 
 interface CitationFormProps {
   onSubmit: (citation: Omit<Citation, 'id' | 'project_id' | 'createdAt' | 'updatedAt'>) => void;
@@ -34,13 +45,17 @@ const formatDateForInput = (dateString?: string): string => {
 
 export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, initialValues = {}, tags = [] }) => {
   const [formData, setFormData] = useState(() => ({
-    type: (initialValues.type || 'case_reported') as CitationType, // Set default type
+    type: (initialValues.type || 'case_reported') as CitationType,
     authors: Array.isArray(initialValues.authors) ? initialValues.authors : [],
     editors: Array.isArray(initialValues.editors) ? initialValues.editors : [],
     tags: initialValues.tags || [],
     project_id: initialValues.project_id,
     ...initialValues
   }));
+
+  // State for tracking active and last active fields
+  const [activeField, setActiveField] = useState<string | null>(null);
+  const [lastActiveField, setLastActiveField] = useState<string | null>(null);
 
   // Separate state for selected tags
   const [selectedTags, setSelectedTags] = useState(() =>
@@ -145,11 +160,61 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
     }));
   }, []); // Remove formData dependency since we're using prev state
 
+  const handleRawTextChange = useCallback(async (fieldName: string, value: string) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+
+    // Only process if there's actual content
+    if (!value.trim()) return;
+
+    try {
+      const sourceType = formData.type;
+      const response = await extractCitation(sourceType, value);
+      
+      // Update the form type and fields with the extracted data
+      setFormData(prev => ({
+        ...prev,
+        type: response.citation_type as CitationType,
+        ...response.fields
+      }));
+
+      toast({
+        title: "Citation Extracted",
+        description: "The citation details have been automatically filled in.",
+        type: "success"
+      });
+    } catch (error) {
+      console.error('Error extracting citation:', error);
+      toast({
+        title: "Extraction Failed",
+        description: error instanceof Error ? error.message : "Failed to extract citation details",
+        type: "error"
+      });
+    }
+  }, [formData.type]);
+
   const renderTypeSpecificFields = () => {
     console.log('renderTypeSpecificFields called with type:', formData.type);
 
     const fields = (() => {
       switch (formData.type) {
+        case 'custom':
+          return (
+            <div key="custom-fields" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Citation Text</Label>
+                <div className="border border-gray-300 rounded-md p-2 min-h-[150px] bg-white focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-0">
+                  <Editor
+                    editorState={editorState}
+                    onChange={setEditorState}
+                    handleKeyCommand={handleKeyCommand}
+                    placeholder="Enter your citation text..."
+                    style={editorStyles.editor}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+
         // Judicial Decisions
         case 'case_reported':
           return (
@@ -1447,6 +1512,48 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             </div>
           );
 
+        case 'westlaw_case':
+          return (
+            <div key="westlaw-case-fields" className="space-y-4">
+              {renderTextArea('raw_text', 'Paste Citation from Westlaw', 10)}
+            </div>
+          );
+
+        case 'lexisnexis_case':
+          return (
+            <div key="lexisnexis-case-fields" className="space-y-4">
+              {renderTextArea('raw_text', 'Paste Citation from LexisNexis', 10)}
+            </div>
+          );
+
+        case 'ssrn_article':
+          return (
+            <div key="ssrn-article-fields" className="space-y-4">
+              {renderTextArea('raw_text', 'Paste Citation from SSRN', 10)}
+            </div>
+          );
+
+        case 'scholar_article':
+          return (
+            <div key="scholar-article-fields" className="space-y-4">
+              {renderTextArea('raw_text', 'Paste Citation from Google Scholar', 10)}
+            </div>
+          );
+
+        case 'scholar_book':
+          return (
+            <div key="scholar-book-fields" className="space-y-4">
+              {renderTextArea('raw_text', 'Paste Citation from Google Scholar', 10)}
+            </div>
+          );
+
+        case 'jade_case':
+          return (
+            <div key="jade-case-fields" className="space-y-4">
+              {renderTextArea('raw_text', 'Paste Citation from Jade Professional', 10)}
+            </div>
+          );
+
         default:
           return null;
       }
@@ -1468,28 +1575,72 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
     );
   };
 
-  // Add state for active field
-  const [activeField, setActiveField] = useState<string | null>(null);
+  // Add this helper function
+  const isEditing = useCallback(() => {
+    return Object.keys(initialValues).length > 0;
+  }, [initialValues]);
 
-  // Add this function to handle blur with delay
-  const handleBlur = useCallback(() => {
-    // Small delay to allow the next focus event to fire first
-    setTimeout(() => {
-      // Only clear if no new focus has occurred
-      setActiveField((current) => {
-        if (document.activeElement?.tagName === 'INPUT') {
-          return current;
-        }
-        return null;
-      });
-    }, 10);
-  }, []);
+  // Add at the top of the component
+  useEffect(() => {
+    console.log('formData changed:', formData);
+  }, [formData]);
 
-  // Add at the top with other state
-  const [lastFocusedField, setLastFocusedField] = useState<string | null>(null);
-
-  // Add this state to control the CitationTypeSelector dialog
+  // Add state to control the CitationTypeSelector dialog
   const [isTypeSelectorOpen, setIsTypeSelectorOpen] = useState(!initialValues.type);
+
+  const [editorState, setEditorState] = useState(() => {
+    if (initialValues?.formatted_citation) {
+      try {
+        const contentState = convertFromRaw(JSON.parse(initialValues.formatted_citation));
+        return EditorState.createWithContent(contentState);
+      } catch {
+        // If the formatted_citation is not in Draft.js format, create empty editor
+        return EditorState.createEmpty();
+      }
+    }
+    return EditorState.createEmpty();
+  });
+
+  const handleKeyCommand = (command: string, editorState: EditorState) => {
+    const newState = RichUtils.handleKeyCommand(editorState, command);
+    if (newState) {
+      setEditorState(newState);
+      return 'handled';
+    }
+    return 'not-handled';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    if (initialValues) {
+      formData.append('id', initialValues.id.toString());
+    }
+    formData.append('type', formData.type);
+    formData.append('project_id', formData.project_id.toString());
+    if (Array.isArray(formData.authors)) {
+      formData.append('authors', JSON.stringify(formData.authors));
+    }
+    if (Array.isArray(formData.editors)) {
+      formData.append('editors', JSON.stringify(formData.editors));
+    }
+    if (Array.isArray(formData.tags)) {
+      formData.append('tags', JSON.stringify(formData.tags));
+    }
+    if (formData.type === 'custom') {
+      const contentState = editorState.getCurrentContent();
+      const rawContent = convertToRaw(contentState);
+      formData.append('formatted_citation', JSON.stringify(rawContent));
+    } else {
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'type' && key !== 'project_id' && key !== 'authors' && key !== 'editors' && key !== 'tags') {
+          formData.append(key, value.toString());
+        }
+      });
+    }
+    onSubmit(formData);
+  };
 
   // Memoize renderInput
   const renderInput = useCallback((fieldName: string, label: string, type: string = 'text') => {
@@ -1503,7 +1654,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
 
     // Add this helper function
     const getInputValue = (value: any): string => {
-      if (Array.isArray(value) || typeof value === 'object') {
+      if (value === null || value === undefined) {
         return '';
       }
       return value?.toString() || '';
@@ -1517,15 +1668,23 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
           {label}
         </Label>
         <div className="flex gap-2">
+          {fieldName === 'type' && (
+            <div className="flex items-center gap-2 px-3 border rounded-md bg-gray-50">
+              {Object.values(citationTypes).flat().find(type => type.value === formData.type)?.icon}
+            </div>
+          )}
           <Input
             type={type}
             id={fieldName}
             name={fieldName}
-            value={getInputValue(formData[fieldName as keyof typeof formData])}
+            value={fieldName === 'type' ? Object.values(citationTypes).flat().find(type => type.value === formData.type)?.label || '' : getInputValue(formData[fieldName as keyof typeof formData])}
             onChange={handleChange}
-            onFocus={() => setActiveField(fieldName)}
-            onBlur={handleBlur}
+            onFocus={() => {
+              setActiveField(fieldName);
+              setLastActiveField(fieldName);
+            }}
             className="flex-1"
+            readOnly={fieldName === 'type'}
           />
           {fieldName.includes('year') && (formData.type !== 'act' && formData.type !== 'delegated_legislation' && formData.type !== 'bill' && formData.type !== 'book' && formData.type !== 'book_chapter' && formData.type !== 'book_with_editor' && formData.type !== 'translated_book' && formData.type !== 'audiobook' && formData.type !== 'high_court_transcript') && (
             <>
@@ -1552,17 +1711,27 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
         </div>
       </div>
     );
-  }, [formData, handleChange, setActiveField, handleBlur]);
+  }, [formData, handleChange, setActiveField, setLastActiveField]);
 
-  // Add this helper function
-  const isEditing = useCallback(() => {
-    return Object.keys(initialValues).length > 0;
-  }, [initialValues]);
-
-  // Add at the top of the component
-  useEffect(() => {
-    console.log('formData changed:', formData);
-  }, [formData]);
+  const renderTextArea = useCallback((fieldName: string, label: string, rows: number = 10) => {
+    return (
+      <div key={fieldName} className="space-y-2">
+        <Label htmlFor={fieldName}>{label}</Label>
+        <Textarea
+          id={fieldName}
+          name={fieldName}
+          value={formData[fieldName as keyof typeof formData] as string || ''}
+          onChange={(e) => handleRawTextChange(fieldName, e.target.value)}
+          onFocus={() => {
+            setActiveField(fieldName);
+            setLastActiveField(fieldName);
+          }}
+          rows={rows}
+          className="min-h-[200px]"
+        />
+      </div>
+    );
+  }, [formData, setActiveField, setLastActiveField, handleRawTextChange]);
 
   return (
     <Dialog open onOpenChange={() => onCancel()}>
@@ -1586,7 +1755,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             {formData.type && renderTypeSpecificFields()}
           </div>
           <div className="overflow-y-auto border-l pl-4">
-            <CitationRules activeField={activeField} citationType={formData.type} />
+            <CitationRules activeField={lastActiveField} citationType={formData.type} />
           </div>
         </div>
 
@@ -1600,7 +1769,7 @@ export const CitationForm: React.FC<CitationFormProps> = ({ onSubmit, onCancel, 
             <div className="flex gap-2 shrink-0 ml-4 my-1">
               <Button
                 type="submit"
-                onClick={handleButtonSubmit}
+                onClick={handleSubmit}
                 className="bg-black text-white hover:bg-gray-800 px-4 rounded-md flex items-center"
               >
                 {isEditing() ? 'Update' : 'Add'} Citation

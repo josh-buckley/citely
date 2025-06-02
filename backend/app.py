@@ -3,6 +3,7 @@ from flask_cors import CORS
 from services import CitationService, ProjectService, TagService
 from models.base import Citation, Project, Tag
 from utils.formatcitation import AGLC4Citation
+from utils.citation_extractor import CitationExtractor
 from dotenv import load_dotenv
 import os
 from datetime import datetime
@@ -26,6 +27,7 @@ CORS(app, resources={
 citation_service = CitationService()
 project_service = ProjectService()
 tag_service = TagService()
+citation_extractor = CitationExtractor()
 
 # Initialize AGLC4 formatter
 aglc_formatter = AGLC4Citation()
@@ -195,6 +197,37 @@ def search_citations():
     except Exception as e:
         app.logger.error(f"Error searching citations: {str(e)}")
         return jsonify({"error": "Failed to search citations"}), 500
+
+@app.route('/api/citations/extract', methods=['POST'])
+@require_auth
+def extract_citation():
+    """
+    Extract citation details from pasted text
+    """
+    try:
+        data = request.json
+        if not data or 'source_type' not in data or 'text' not in data:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        source_type = data['source_type']
+        text = data['text']
+
+        # Extract citation details
+        try:
+            citation_type, extracted_fields = citation_extractor.extract_citation(source_type, text)
+            return jsonify({
+                "citation_type": citation_type,
+                "fields": extracted_fields
+            })
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
+        except Exception as e:
+            app.logger.error(f"Citation extraction error: {str(e)}")
+            return jsonify({"error": "Failed to extract citation details"}), 500
+
+    except Exception as e:
+        app.logger.error(f"Error in extract_citation: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 # Project routes
 @app.route('/api/projects', methods=['GET'])

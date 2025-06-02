@@ -21,7 +21,6 @@ export default function LandingPage() {
       <Integrations />
       <Testimonials />
       <ProblemSolution />
-      <CtaSection />
       <Footer />
     </main>
   );

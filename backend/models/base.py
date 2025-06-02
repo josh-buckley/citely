@@ -38,6 +38,7 @@ class Citation(TimestampedModel):
     type: str
     formatted_citation: Optional[str] = None
     order: Optional[int] = None
+    source: Optional[str] = None
     
     # Common fields
     title: Optional[str] = None

@@ -16,12 +16,13 @@ import {
 import { CitationForm } from "../../../../components/CitationForm"
 import { Button } from "../../../../components/ui/button"
 import { Input } from "../../../../components/ui/input"
+import { Label } from "../../../../components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../../components/ui/dropdown-menu"
 import { Badge } from "../../../../components/ui/badge"
 import { ScrollArea } from "../../../../components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
-import { BookOpen, FileText, Gavel, Search, PlusCircle, Edit, Trash2, Copy, X, StickyNote, Check, Book, Globe, MoreHorizontal, Plus, ExternalLink, MoreVertical, ChevronDown, ChevronUp, Pencil, ChevronRight, Files, Library, Layers } from 'lucide-react'
+import { BookOpen, FileText, Gavel, Search, PlusCircle, Edit, Trash2, Copy, X, StickyNote, Check, Book, Globe, MoreHorizontal, Plus, LinkIcon, MoreVertical, ChevronDown, ChevronUp, Pencil, ChevronRight, Files, Library, Layers, Link2 } from 'lucide-react'
 import { toast } from "../../../../components/ui/toast"
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { GripVertical } from 'lucide-react'
@@ -36,6 +37,9 @@ import { supabase } from '../../../../lib/supabase';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loader } from "../../../../components/ui/loader"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../../components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
+import { PlusIcon, ArrowRightIcon } from 'lucide-react'
 
 interface DragHandleProps {
   dragHandleProps: any;
@@ -220,7 +224,8 @@ export default React.memo(function CitationManager() {
     id: '',
     project_id: project_id,
     type: '' as CitationType,
-    
+    source: '',
+
     // Common fields
     title: '',
     year: 2024,
@@ -371,6 +376,12 @@ export default React.memo(function CitationManager() {
 
   // Add this new state to track the currently editing tag
   const [editingTagId, setEditingTagId] = useState<{ citationId: string, tagId: string } | null>(null);
+
+  const [sourceDialogOpen, setSourceDialogOpen] = useState(false);
+  const [selectedCitationForSource, setSelectedCitationForSource] = useState<Citation | null>(null);
+  const [sourceInput, setSourceInput] = useState<string>('');
+
+  const [sourcePopoverOpen, setSourcePopoverOpen] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -1040,6 +1051,77 @@ export default React.memo(function CitationManager() {
       .join('');
   }
 
+  // Add this helper function to ensure URL has a protocol
+  const ensureUrlProtocol = (url: string): string => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `https://${url}`;
+    }
+    return url;
+  };
+
+  // Add this helper function to clean URLs for display
+  const getDisplayUrl = (url: string): string => {
+    return url.replace(/^https?:\/\/(www\.)?/, '');
+  };
+
+  const handleSourceSubmit = async (citation: Citation) => {
+    // Update UI immediately
+    const optimisticCitation = {
+      ...citation,
+      source: sourceInput ? ensureUrlProtocol(sourceInput) : undefined
+    };
+    setCitations(citations.map(c => 
+      c.id === optimisticCitation.id ? optimisticCitation : c
+    ));
+    setSourceInput('');
+    setSourcePopoverOpen(null);
+    
+    try {
+      // Update backend
+      const updatedCitation = await updateCitation(optimisticCitation);
+      
+      // Update with backend response (in case of any differences)
+      setCitations(citations.map(c => 
+        c.id === updatedCitation.id ? updatedCitation : c
+      ));
+    } catch (error) {
+      console.error('Error updating citation source:', error);
+      // Revert on error
+      setCitations(citations.map(c => 
+        c.id === citation.id ? citation : c
+      ));
+      toast("Error updating source");
+    }
+  };
+
+  const handleDeleteSource = async (citation: Citation) => {
+    // Update UI immediately
+    const optimisticCitation = { ...citation, source: undefined };
+    setCitations(citations.map(c => 
+      c.id === optimisticCitation.id ? optimisticCitation : c
+    ));
+    setSourcePopoverOpen(null);
+    
+    try {
+      // Update backend
+      const updatedCitation = await updateCitation(optimisticCitation);
+      
+      // Update with backend response (in case of any differences)
+      setCitations(citations.map(c => 
+        c.id === updatedCitation.id ? updatedCitation : c
+      ));
+      
+      toast("Source removed");
+    } catch (error) {
+      console.error('Error removing source:', error);
+      // Revert on error
+      setCitations(citations.map(c => 
+        c.id === citation.id ? citation : c
+      ));
+      toast("Error removing source");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1 w-full pl-[-16px] pr-[64px] sm:pl-[-8px] sm:pr-[72px] lg:pl-0 lg:pr-[80px]">
@@ -1406,7 +1488,8 @@ export default React.memo(function CitationManager() {
                         <TableHead className="w-[50px]"></TableHead>
                         <TableHead className="w-[50%] text-sm">Formatted Citation</TableHead>
                         <TableHead className="w-[20%] text-sm">Type</TableHead>
-                        <TableHead className="w-[30%] text-sm">Tags</TableHead>
+                        <TableHead className="w-[20%] text-sm">Tags</TableHead>
+                        <TableHead className="w-[20%] text-sm">Source</TableHead>
                         <TableHead className="text-sm"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1470,7 +1553,7 @@ export default React.memo(function CitationManager() {
                                   <TableCell className="w-[20%] py-2 font-medium">
                                     {getFriendlyTypeName(citation.type)}
                                   </TableCell>
-                                  <TableCell className="w-[30%] py-2">
+                                  <TableCell className="w-[20%] py-2">
                                     <div className="flex flex-wrap gap-1 items-center">
                                       {citation.tags && citation.tags.map((tag) => (
                                         <div key={tag.id} className="relative inline-block">
@@ -1529,20 +1612,92 @@ export default React.memo(function CitationManager() {
                                       <div className="relative">
                                         <Input
                                           type="text"
-                                          placeholder="Add tag"
+                                          placeholder="Add Tag"
                                           value={newTags[citation.id] || ''}
                                           onChange={(e) => setNewTags(prev => ({ ...prev, [citation.id]: e.target.value }))}
-                                          onKeyPress={(e) => {
-                                            if (e.key === 'Enter') {
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && newTags[citation.id]?.trim()) {
                                               handleAddTag(citation.id, newTags[citation.id]);
                                               setNewTags(prev => ({ ...prev, [citation.id]: '' }));
                                             }
                                           }}
-                                          className="w-24 h-7 text-xs pr-6 pl-2 py-1 rounded-full"
+                                          className="h-6 w-24 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                         />
                                         <PlusCircle className="w-4 h-4 absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                       </div>
                                     </div>
+                                  </TableCell>
+                                  <TableCell className="w-[20%] py-2 relative">
+                                    {citation.source ? (
+                                      <Popover open={sourcePopoverOpen === citation.id} onOpenChange={(open) => setSourcePopoverOpen(open ? citation.id : null)}>
+                                        <PopoverTrigger asChild>
+                                          <button
+                                            className="p-1 rounded-sm transition-colors absolute right-[51px] top-1/2 transform -translate-y-1/2"
+                                          >
+                                            <LinkIcon className="h-4 w-4 text-black hover:scale-105" />
+                                          </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="bg-white p-3 w-[275px]" align="end">
+                                          <div className="flex items-center justify-between w-full">
+                                            <a
+                                              href={ensureUrlProtocol(citation.source!)}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="text-sm hover:text-gray-700 transition-colors hover:underline"
+                                              title={citation.source}
+                                            >
+                                              {citation.source && getDisplayUrl(citation.source).length > 30 
+                                                ? `${getDisplayUrl(citation.source).slice(0, 30)}...`
+                                                : getDisplayUrl(citation.source)}
+                                            </a>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteSource(citation);
+                                              }}
+                                              className="p-1 rounded-sm"
+                                            >
+                                              <Trash2 className="h-4 w-4 text-red-500 hover:scale-105" />
+                                            </button>
+                                          </div>
+                                        </PopoverContent>
+                                      </Popover>
+                                    ) : (
+                                      <Popover open={sourcePopoverOpen === citation.id} onOpenChange={(open) => setSourcePopoverOpen(open ? citation.id : null)}>
+                                        <PopoverTrigger asChild>
+                                          <button
+                                            className="p-1 rounded-sm transition-colors absolute right-[51px] top-1/2 transform -translate-y-1/2"
+                                          >
+                                            <PlusIcon className="h-4 w-4 text-black hover:scale-105" />
+                                          </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="bg-white p-3 w-[300px]" align="end">
+                                          <div className="flex items-center justify-between w-full gap-2">
+                                            <input
+                                              type="text"
+                                              placeholder="Enter URL"
+                                              value={sourceInput}
+                                              onChange={(e) => {
+                                                e.stopPropagation();
+                                                setSourceInput(e.target.value);
+                                              }}
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="flex-1 text-sm p-1 border rounded"
+                                            />
+                                            <button
+                                              onClick={async (e) => {
+                                                e.stopPropagation();
+                                                await handleSourceSubmit(citation);
+                                              }}
+                                              className="p-1 rounded-sm hover:scale-105 transition-colors"
+                                            >
+                                              <ArrowRightIcon className="h-4 w-4 text-gray-500 hover:text-black" />
+                                            </button>
+                                          </div>
+                                        </PopoverContent>
+                                      </Popover>
+                                    )}
                                   </TableCell>
                                   <TableCell className="text-right py-2">
                                     <DropdownMenu>
@@ -1635,5 +1790,5 @@ export default React.memo(function CitationManager() {
         title="Delete Citation"
       />
     </div>
-  )
-})
+  );
+});

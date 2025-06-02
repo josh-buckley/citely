@@ -291,7 +291,7 @@ export default function CitationTypeScroll() {
               <br />
               types supported.
             </h2>
-            <p className="mt-4 text-l text-gray-600">
+            <p className="mt-4 text-lg text-gray-600">
               CiteCounsel generates AGLC4 compliant citations in seconds with our advanced automation engine covering <b>Judicial</b>, <b>Legislative</b>, <b>Secondary</b> and <b>International</b> materials.
             </p>
           </motion.div>
