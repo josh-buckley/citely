@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { onlineLegalEncyclopediaRules } from "../../lib/onlineLegalEncyclopedia";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface OnlineLegalEncyclopediaRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,15 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function OnlineLegalEncyclopediaRules({ activeField }: OnlineLegalEncyclopediaRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    publisher: [onlineLegalEncyclopediaRules.publisher],
+    title_of_encyclopedia: [onlineLegalEncyclopediaRules.encyclopediaTitle, onlineLegalEncyclopediaRules.retrievalDate],
+    title_number: [onlineLegalEncyclopediaRules.titleNumber],
+    name_of_title: [onlineLegalEncyclopediaRules.nameOfTitle],
+    chapter_number: [onlineLegalEncyclopediaRules.chapterNumber],
+    name_of_chapter: [onlineLegalEncyclopediaRules.nameOfChapter],
+    paragraph: [onlineLegalEncyclopediaRules.paragraph]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

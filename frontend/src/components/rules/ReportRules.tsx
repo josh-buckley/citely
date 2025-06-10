@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { reportRules } from "../../lib/report";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface ReportRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,13 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function ReportRules({ activeField }: ReportRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    author: [reportRules.authors, reportRules.multipleAuthors, reportRules.bodyAuthors],
+    title: [reportRules.title],
+    document_type_series: [reportRules.documentDetails.documentTypeAndSeries],
+    document_number: [reportRules.documentDetails.documentNumber],
+    pinpoint: [reportRules.pinpointReferences, reportRules.url]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

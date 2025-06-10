@@ -1,4 +1,4 @@
-export const bookRules = {
+export const audiobookRules = {
   authors: {
     title: "General Rules for Authors",
     rules: [
@@ -204,39 +204,6 @@ export const bookRules = {
           }
         ]
       },
-      editionNumber: {
-        title: "Edition",
-        rules: [
-          "Include edition number after publisher's name when multiple editions exist.",
-          "Show ordinal indicator in superscript.",
-          "Format as: Ordinal Edition Number ed,."
-        ],
-        examples: [
-          {
-            correct: "(LexisNexis Butterworths, 15th ed, 2013)",
-            explanation: "Edition number with superscript ordinal."
-          }
-        ]
-      },
-      revisedEditions: {
-        title: "Revised Editions",
-        rules: [
-          "Use 'rev ed' for revised/expanded/updated editions without new number.",
-          "Place after edition number if exists, with space.",
-          "Place after publisher's name with comma if no edition number.",
-          "Use '1st rev ed' only if edition number appears in book."
-        ],
-        examples: [
-          {
-            correct: "(Kluwer Law International, 3rd rev ed, 2008)",
-            explanation: "Revised edition with edition number."
-          },
-          {
-            correct: "(Oxford University Press, rev ed, 2012)",
-            explanation: "Revised edition without edition number."
-          }
-        ]
-      },
       publicationYear: {
         title: "Year of Publication",
         rules: [
@@ -289,23 +256,13 @@ export const bookRules = {
         }
       ]
     },
-    multiVolume: {
-      title: "Multi-Volume Books",
-      rules: [
-        "Include volume number after publication details.",
-        "Precede with 'vol' or 'bk' (if source uses 'books').",
-        "Use Arabic numerals regardless of source format.",
-        "Include comma between volume number and pinpoint."
-      ],
-      examples: [
-        {
-          correct: "<i>The Moral Limits of the Criminal Law</i> (Oxford University Press, 1984–88) vol 4, 45",
-          explanation: "Multi-volume work with volume number and pinpoint."
-        },
-        {
-          correct: "<i>Tenancy Law of New South Wales</i> (Butterworths, 1966) bk 2",
-          explanation: "Using 'bk' designation for source using 'books'."
-        }
-      ]
-    }
-  };
+  citationExamples: {
+    title: "Citation Examples",
+    examples: [
+      {
+        context: "Audiobook",
+        correct: "Stephen King, <i>The Stand</i> (Audible, 2012) ch 3."
+      }
+    ]
+  }
+}; 

@@ -1,0 +1,8 @@
+flask
+flask-cors
+python-dotenv
+pyjwt
+supabase
+pydantic
+sqlalchemy
+flask_sqlalchemy

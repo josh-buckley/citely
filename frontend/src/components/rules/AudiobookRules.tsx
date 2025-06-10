@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { audiobookRules } from "../../lib/audiobook";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface AudiobookRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,13 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function AudiobookRules({ activeField }: AudiobookRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    author: [audiobookRules.authors, audiobookRules.multipleAuthors, audiobookRules.bodyAuthors, audiobookRules.judicialOfficers],
+    title: [audiobookRules.title],
+    publisher: [audiobookRules.publicationDetails.publisher],
+    publication_year: [audiobookRules.publicationDetails.publicationYear],
+    pinpoint: [audiobookRules.pinpointReferences]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

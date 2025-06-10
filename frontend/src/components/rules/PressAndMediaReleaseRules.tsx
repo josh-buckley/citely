@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { pressAndMediaReleaseRules } from "../../lib/pressAndMediaRelease";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface PressAndMediaReleaseRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,14 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function PressAndMediaReleaseRules({ activeField }: PressAndMediaReleaseRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    author: [pressAndMediaReleaseRules.authors],
+    title: [pressAndMediaReleaseRules.title],
+    release_type: [pressAndMediaReleaseRules.releaseDetails.releaseType],
+    document_number: [pressAndMediaReleaseRules.releaseDetails.documentNumber],
+    body: [pressAndMediaReleaseRules.releaseDetails.body],
+    pinpoint: [pressAndMediaReleaseRules.pinpointReferences, pressAndMediaReleaseRules.url]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

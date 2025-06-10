@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { hardCopyDictionaryRules } from "../../lib/hardCopyDictionary";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface HardCopyDictionaryRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,13 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function HardCopyDictionaryRules({ activeField }: HardCopyDictionaryRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    dictionary_title: [hardCopyDictionaryRules.dictionaryTitle],
+    edition_number: [hardCopyDictionaryRules.editionNumber],
+    publication_year: [hardCopyDictionaryRules.publicationYear],
+    entry_title: [hardCopyDictionaryRules.entryTitle],
+    definition_number: [hardCopyDictionaryRules.definitionNumber]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

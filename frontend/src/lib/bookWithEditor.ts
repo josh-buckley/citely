@@ -1,4 +1,4 @@
-export const bookRules = {
+export const bookWithEditorRules = {
   authors: {
     title: "General Rules for Authors",
     rules: [
@@ -170,142 +170,146 @@ export const bookRules = {
       ]
     }
   },
-    publicationDetails: {
-      title: "Publication Details",
-      publisher: {
-        title: "Publisher",
-        rules: [
-          "Include publisher's name in parentheses after title.",
-          "Follow with a comma.",
-          "Use name as on title page with exceptions:",
-          "- Use publication information page if no publisher on title page.",
-          "- Omit 'the' at start of publisher's name.",
-          "- Omit corporate status abbreviations (Pty, Ltd, Co, etc).",
-          "- Generally omit geographical designations unless necessary.",
-          "- Omit subdivisions within companies.",
-          "Other publisher rules:",
-          "- Omit if publisher same as author.",
-          "- Include only first-listed publisher if multiple publishers.",
-          "- Use only imprint if specified.",
-          "- Include only publisher for books published on behalf of another organization.",
-          "- Use only English-language name for multilingual publishers.",
-          "- Omit publisher for older works listing printers/booksellers instead."
-        ],
-        examples: [
-          {
-            correct: "(Federation Press, 2012)",
-            incorrect: "(The Federation Press, 2012)",
-            explanation: "Omit 'the' from publisher name."
-          },
-          {
-            correct: "(Lawbook, 2nd ed, 2016)",
-            incorrect: "(Lawbook Co, 2nd ed, 2016)",
-            explanation: "Omit corporate status abbreviations."
-          }
-        ]
-      },
-      editionNumber: {
-        title: "Edition",
-        rules: [
-          "Include edition number after publisher's name when multiple editions exist.",
-          "Show ordinal indicator in superscript.",
-          "Format as: Ordinal Edition Number ed,."
-        ],
-        examples: [
-          {
-            correct: "(LexisNexis Butterworths, 15th ed, 2013)",
-            explanation: "Edition number with superscript ordinal."
-          }
-        ]
-      },
-      revisedEditions: {
-        title: "Revised Editions",
-        rules: [
-          "Use 'rev ed' for revised/expanded/updated editions without new number.",
-          "Place after edition number if exists, with space.",
-          "Place after publisher's name with comma if no edition number.",
-          "Use '1st rev ed' only if edition number appears in book."
-        ],
-        examples: [
-          {
-            correct: "(Kluwer Law International, 3rd rev ed, 2008)",
-            explanation: "Revised edition with edition number."
-          },
-          {
-            correct: "(Oxford University Press, rev ed, 2012)",
-            explanation: "Revised edition without edition number."
-          }
-        ]
-      },
-      publicationYear: {
-        title: "Year of Publication",
-        rules: [
-          "Include year of publication after publisher and edition details.",
-          "Use year of cited edition (not first publication year).",
-          "For multi-volume works:",
-          "- Include span of years for completed works.",
-          "- Use first year with en-dash for ongoing publications."
-        ],
-        examples: [
-          {
-            correct: "(Duckworth, 1982)",
-            explanation: "Standard single year."
-          },
-          {
-            correct: "(Martinus Nijhoff, 1993–2002)",
-            explanation: "Completed multi-volume work year span."
-          },
-          {
-            correct: "(Department of Foreign Affairs and Trade, 1975–)",
-            explanation: "Ongoing publication with open-ended year."
-          }
-        ]
+  editors: {
+    title: "General Rules for Editors",
+    rules: [
+        "Editors' names should be treated in the same way as authors' names.",
+        "The name(s) should be followed by '(ed)' for a single editor, or '(eds)' for multiple editors.",
+        "Editor details appear before the publication details."
+    ],
+    examples: [
+      {
+        correct: "Penelope A Bulloch and Joseph Raz (eds),",
+        explanation: "Multiple editors, followed by a comma."
       }
-    },
-    pinpointReferences: {
-      title: "Pinpoint References",
+    ]
+  },
+  publicationDetails: {
+    title: "Publication Details",
+    publisher: {
+      title: "Publisher",
       rules: [
-        "Follow rules 1.1.6–1.1.7 for pinpoint references.",
-        "Place after publication details without comma.",
-        "Use comma before pinpoint only when citing specific volume.",
-        "Generally use page numbers for pinpoints.",
-        "May include paragraph numbers with page numbers.",
-        "Use 'ch' or 'pt' (plural: 'chs' or 'pts') for chapter or part references."
+        "Include publisher's name in parentheses after title.",
+        "Follow with a comma.",
+        "Use name as on title page with exceptions:",
+        "- Use publication information page if no publisher on title page.",
+        "- Omit 'the' at start of publisher's name.",
+        "- Omit corporate status abbreviations (Pty, Ltd, Co, etc).",
+        "- Generally omit geographical designations unless necessary.",
+        "- Omit subdivisions within companies.",
+        "Other publisher rules:",
+        "- Omit if publisher same as author.",
+        "- Include only first-listed publisher if multiple publishers.",
+        "- Use only imprint if specified.",
+        "- Include only publisher for books published on behalf of another organization.",
+        "- Use only English-language name for multilingual publishers.",
+        "- Omit publisher for older works listing printers/booksellers instead."
       ],
       examples: [
         {
-          correct: "<i>Essays on Contract</i> (Clarendon Press, 1986) 247–8",
-          incorrect: "<i>Essays on Contract</i> (Clarendon Press, 1986), 247–8",
-          explanation: "No comma before pinpoint."
+          correct: "(Federation Press, 2012)",
+          incorrect: "(The Federation Press, 2012)",
+          explanation: "Omit 'the' from publisher name."
         },
         {
-          correct: "<i>Subrogation: Law and Practice</i> (Oxford University Press, 2007) 9 [2.02]",
-          explanation: "Page number with paragraph number."
-        },
-        {
-          correct: "<i>The Constitution of Australia: A Contextual Analysis</i> (Hart Publishing, 2011) ch 5",
-          incorrect: "<i>The Constitution of Australia: A Contextual Analysis</i> (Hart Publishing, 2011) 147–183",
-          explanation: "Use chapter reference instead of page range."
+          correct: "(Lawbook, 2nd ed, 2016)",
+          incorrect: "(Lawbook Co, 2nd ed, 2016)",
+          explanation: "Omit corporate status abbreviations."
         }
       ]
     },
-    multiVolume: {
-      title: "Multi-Volume Books",
+    editionNumber: {
+      title: "Edition",
       rules: [
-        "Include volume number after publication details.",
-        "Precede with 'vol' or 'bk' (if source uses 'books').",
-        "Use Arabic numerals regardless of source format.",
-        "Include comma between volume number and pinpoint."
+        "Include edition number after publisher's name when multiple editions exist.",
+        "Show ordinal indicator in superscript.",
+        "Format as: Ordinal Edition Number ed,."
       ],
       examples: [
         {
-          correct: "<i>The Moral Limits of the Criminal Law</i> (Oxford University Press, 1984–88) vol 4, 45",
-          explanation: "Multi-volume work with volume number and pinpoint."
+          correct: "(LexisNexis Butterworths, 15th ed, 2013)",
+          explanation: "Edition number with superscript ordinal."
+        }
+      ]
+    },
+    revisedEditions: {
+      title: "Revised Editions",
+      rules: [
+        "Use 'rev ed' for revised/expanded/updated editions without new number.",
+        "Place after edition number if exists, with space.",
+        "Place after publisher's name with comma if no edition number.",
+        "Use '1st rev ed' only if edition number appears in book."
+      ],
+      examples: [
+        {
+          correct: "(Kluwer Law International, 3rd rev ed, 2008)",
+          explanation: "Revised edition with edition number."
         },
         {
-          correct: "<i>Tenancy Law of New South Wales</i> (Butterworths, 1966) bk 2",
-          explanation: "Using 'bk' designation for source using 'books'."
+          correct: "(Oxford University Press, rev ed, 2012)",
+          explanation: "Revised edition without edition number."
+        }
+      ]
+    },
+    publicationYear: {
+      title: "Year of Publication",
+      rules: [
+        "Include year of publication after publisher and edition details.",
+        "Use year of cited edition (not first publication year).",
+        "For multi-volume works:",
+        "- Include span of years for completed works.",
+        "- Use first year with en-dash for ongoing publications."
+      ],
+      examples: [
+        {
+          correct: "(Duckworth, 1982)",
+          explanation: "Standard single year."
+        },
+        {
+          correct: "(Martinus Nijhoff, 1993–2002)",
+          explanation: "Completed multi-volume work year span."
+        },
+        {
+          correct: "(Department of Foreign Affairs and Trade, 1975–)",
+          explanation: "Ongoing publication with open-ended year."
         }
       ]
     }
-  };
+  },
+  pinpointReferences: {
+    title: "Pinpoint References",
+    rules: [
+      "Follow rules 1.1.6–1.1.7 for pinpoint references.",
+      "Place after publication details without comma.",
+      "Use comma before pinpoint only when citing specific volume.",
+      "Generally use page numbers for pinpoints.",
+      "May include paragraph numbers with page numbers.",
+      "Use 'ch' or 'pt' (plural: 'chs' or 'pts') for chapter or part references."
+    ],
+    examples: [
+      {
+        correct: "<i>Essays on Contract</i> (Clarendon Press, 1986) 247–8",
+        incorrect: "<i>Essays on Contract</i> (Clarendon Press, 1986), 247–8",
+        explanation: "No comma before pinpoint."
+      },
+      {
+        correct: "<i>Subrogation: Law and Practice</i> (Oxford University Press, 2007) 9 [2.02]",
+        explanation: "Page number with paragraph number."
+      },
+      {
+        correct: "<i>The Constitution of Australia: A Contextual Analysis</i> (Hart Publishing, 2011) ch 5",
+        incorrect: "<i>The Constitution of Australia: A Contextual Analysis</i> (Hart Publishing, 2011) 147–183",
+        explanation: "Use chapter reference instead of page range."
+      }
+    ]
+  },
+  citationExamples: {
+    title: "Citation Examples",
+    examples: [
+      {
+        context: "Book with an editor",
+        correct: "HLA Hart, <i>The Concept of Law</i> (Penelope A Bulloch and Joseph Raz eds, 3rd ed, Oxford University Press, 2012)."
+      }
+    ]
+  }
+}; 

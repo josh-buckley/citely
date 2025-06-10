@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { onlineDictionaryRules } from "../../lib/onlineDictionary";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface OnlineDictionaryRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,11 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function OnlineDictionaryRules({ activeField }: OnlineDictionaryRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    dictionary_title: [onlineDictionaryRules.dictionaryTitle, onlineDictionaryRules.retrievalDate],
+    entry_title: [onlineDictionaryRules.entryTitle],
+    definition_number: [onlineDictionaryRules.definitionNumber]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

@@ -14,6 +14,25 @@ import { TranscriptRules } from "./rules/TranscriptRules";
 import { HighCourtTranscriptRules } from "./rules/HighCourtTranscriptRules";
 import { SubmissionRules } from "./rules/SubmissionRules";
 import { Card } from './ui/card';
+import { DelegatedLegislationRules } from "./rules/DelegatedLegislationRules";
+import { OrderOrRulingRules } from "./rules/OrderOrRulingRules";
+import { DelegatedNonGovernmentLegislationRules } from "./rules/DelegatedNonGovernmentLegislationRules";
+import { GazetteRules } from "./rules/GazetteRules";
+import { HansardRules } from "./rules/HansardRules";
+import { ExplanatoryMemorandumRules } from "./rules/ExplanatoryMemorandumRules";
+import { SymposiumRules } from "./rules/SymposiumRules";
+import { BookChapterRules } from "./rules/BookChapterRules";
+import { BookWithEditorRules } from "./rules/BookWithEditorRules";
+import { TranslatedBookRules } from './rules/TranslatedBookRules';
+import { AudiobookRules } from './rules/AudiobookRules';
+import { ReportRules } from './rules/ReportRules';
+import { ResearchPaperRules } from './rules/ResearchPaperRules';
+import { SpeechRules } from './rules/SpeechRules';
+import { PressAndMediaReleaseRules } from './rules/PressAndMediaReleaseRules';
+import { HardCopyDictionaryRules } from './rules/HardCopyDictionaryRules';
+import { OnlineDictionaryRules } from './rules/OnlineDictionaryRules';
+import { HardCopyLegalEncyclopediaRules } from './rules/HardCopyLegalEncyclopediaRules';
+import { OnlineLegalEncyclopediaRules } from './rules/OnlineLegalEncyclopediaRules';
 
 interface CitationRulesProps {
   activeField: string | null;
@@ -24,6 +43,62 @@ interface CitationRulesProps {
 export function CitationRules({ activeField, citationType, formData }: CitationRulesProps) {
   if (!activeField) {
     return <div className="h-full"><EmptyState /></div>;
+  }
+
+  // Handle gazette rules
+  if (citationType === 'gazette') {
+    const fieldMap: Record<string, string> = {
+      authors: 'authors',
+      author: 'authors',
+      title_of_notice: 'titleOfNotice',
+      titleOfNotice: 'titleOfNotice',
+      jurisdiction: 'jurisdiction',
+      gazette_title: 'gazetteTitle',
+      gazetteTitle: 'gazetteTitle',
+      gazette_number: 'gazetteNumber',
+      gazetteNumber: 'gazetteNumber',
+      starting_page: 'startingPage',
+      startingPage: 'startingPage',
+      pinpoint: 'pinpoint',
+      citationExamples: 'citationExamples',
+    };
+    const mappedField = fieldMap[activeField] || activeField;
+    return <div key={activeField} className="opacity-0 animate-fade-up"><GazetteRules activeField={mappedField} /></div>;
+  }
+
+  // Handle delegated legislation rules
+  if (citationType === 'delegated_legislation') {
+    if (activeField === 'short_title') {
+      return <div key={activeField} className="opacity-0 animate-fade-up"><DelegatedLegislationRules activeField="individualParts" /></div>;
+    }
+    return <div key={activeField} className="opacity-0 animate-fade-up"><DelegatedLegislationRules activeField={activeField} /></div>;
+  }
+
+  // Handle delegated non-government legislation rules
+  if (citationType === 'delegated_non_government_legislation') {
+    const fieldMap: Record<string, string> = {
+      issuing_body: 'issuingBody',
+      issuingBody: 'issuingBody',
+      title: 'title',
+      pinpoint: 'pinpoint',
+      citationExamples: 'citationExamples',
+    };
+    const mappedField = fieldMap[activeField] || activeField;
+    return <div key={activeField} className="opacity-0 animate-fade-up"><DelegatedNonGovernmentLegislationRules activeField={mappedField} /></div>;
+  }
+
+  // Handle explanatory memorandum rules
+  if (citationType === 'explanatory_memorandum') {
+    const fieldMap: Record<string, string> = {
+      explanatory_type: 'explanatoryType',
+      explanatoryType: 'explanatoryType',
+      bill_citation: 'billCitation',
+      billCitation: 'billCitation',
+      pinpoint: 'pinpoint',
+      citationExamples: 'citationExamples',
+    };
+    const mappedField = fieldMap[activeField] || activeField;
+    return <div key={activeField} className="opacity-0 animate-fade-up"><ExplanatoryMemorandumRules activeField={mappedField} /></div>;
   }
 
   // Handle legislation rules
@@ -115,6 +190,14 @@ export function CitationRules({ activeField, citationType, formData }: CitationR
     return <div key={activeField} className="opacity-0 animate-fade-up"><JournalArticleRules activeField={activeField} /></div>;
   }
 
+  // Handle symposium rules
+  if (citationType === 'symposium') {
+    if (activeField === 'case_name') {
+      return <div key={activeField} className="opacity-0 animate-fade-up"><ReportedDecisionRules activeField={activeField} /></div>;
+    }
+    return <div key={activeField} className="opacity-0 animate-fade-up"><SymposiumRules activeField={activeField} /></div>;
+  }
+
   // Handle submission rules
   if (citationType === 'submission') {
     // For case name, use reported decision rules
@@ -131,6 +214,85 @@ export function CitationRules({ activeField, citationType, formData }: CitationR
       return <div key={activeField} className="opacity-0 animate-fade-up"><ReportedDecisionRules activeField={activeField} /></div>;
     }
     return <div key={activeField} className="opacity-0 animate-fade-up"><BookRules activeField={activeField} /></div>;
+  }
+
+  // Handle book chapter rules
+  if (citationType === 'book_chapter') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><BookChapterRules activeField={activeField} /></div>;
+  }
+
+  // Handle book with editor rules
+  if (citationType === 'book_with_editor') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><BookWithEditorRules activeField={activeField} /></div>;
+  }
+
+  // Handle translated book rules
+  if (citationType === 'translated_book') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><TranslatedBookRules activeField={activeField} /></div>;
+  }
+
+  // Handle audiobook rules
+  if (citationType === 'audiobook') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><AudiobookRules activeField={activeField} /></div>;
+  }
+
+  // Handle report rules
+  if (citationType === 'report') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><ReportRules activeField={activeField} /></div>;
+  }
+
+  // Handle research paper rules
+  if (citationType === 'research_paper') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><ResearchPaperRules activeField={activeField} /></div>;
+  }
+
+  // Handle speech rules
+  if (citationType === 'speech') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><SpeechRules activeField={activeField} /></div>;
+  }
+
+  // Handle press and media release rules
+  if (citationType === 'press_and_media_release') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><PressAndMediaReleaseRules activeField={activeField} /></div>;
+  }
+
+  // Handle hard copy dictionary rules
+  if (citationType === 'hard_copy_dictionary') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><HardCopyDictionaryRules activeField={activeField} /></div>;
+  }
+
+  // Handle online dictionary rules
+  if (citationType === 'online_dictionary') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><OnlineDictionaryRules activeField={activeField} /></div>;
+  }
+
+  // Handle hard copy legal encyclopedia rules
+  if (citationType === 'hard_copy_legal_encyclopedia') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><HardCopyLegalEncyclopediaRules activeField={activeField} /></div>;
+  }
+
+  // Handle online legal encyclopedia rules
+  if (citationType === 'online_legal_encyclopedia') {
+    return <div key={activeField} className="opacity-0 animate-fade-up"><OnlineLegalEncyclopediaRules activeField={activeField} /></div>;
+  }
+
+  // Handle order or ruling rules
+  if (citationType === 'order_or_ruling') {
+    // Map form field names to rules fields if needed
+    const fieldMap: Record<string, string> = {
+      instrumentality: 'instrumentalityOfficer',
+      officer: 'instrumentalityOfficer',
+      instrumentalityOfficer: 'instrumentalityOfficer',
+      instrumentality_officer: 'instrumentalityOfficer',
+      instrument_title: 'instrumentTitle',
+      instrumentTitle: 'instrumentTitle',
+      document_number: 'documentNumber',
+      documentNumber: 'documentNumber',
+      pinpoint: 'pinpoint',
+      citationExamples: 'citationExamples',
+    };
+    const mappedField = fieldMap[activeField] || activeField;
+    return <div key={activeField} className="opacity-0 animate-fade-up"><OrderOrRulingRules activeField={mappedField} /></div>;
   }
 
   // Handle smart extraction rules
@@ -164,6 +326,20 @@ export function CitationRules({ activeField, citationType, formData }: CitationR
         </Card>
       </div>
     );
+  }
+
+  // Handle hansard rules
+  if (citationType === 'hansard') {
+    const fieldMap: Record<string, string> = {
+      jurisdiction: 'jurisdiction',
+      chamber: 'chamber',
+      pinpoint: 'pinpoint',
+      name_of_speaker: 'nameOfSpeaker',
+      nameOfSpeaker: 'nameOfSpeaker',
+      citationExamples: 'citationExamples',
+    };
+    const mappedField = fieldMap[activeField] || activeField;
+    return <div key={activeField} className="opacity-0 animate-fade-up"><HansardRules activeField={mappedField} /></div>;
   }
 
   return <div key={activeField} className="opacity-0 animate-fade-up"><EmptyState /></div>;

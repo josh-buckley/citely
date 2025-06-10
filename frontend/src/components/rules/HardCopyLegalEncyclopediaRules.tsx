@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { hardCopyLegalEncyclopediaRules } from "../../lib/hardCopyLegalEncyclopedia";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface HardCopyLegalEncyclopediaRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,16 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function HardCopyLegalEncyclopediaRules({ activeField }: HardCopyLegalEncyclopediaRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    publisher: [hardCopyLegalEncyclopediaRules.publisher],
+    title_of_encyclopedia: [hardCopyLegalEncyclopediaRules.encyclopediaTitle],
+    volume_number: [hardCopyLegalEncyclopediaRules.volumeNumber, hardCopyLegalEncyclopediaRules.lastUpdateDate],
+    title_number: [hardCopyLegalEncyclopediaRules.titleNumber],
+    name_of_title: [hardCopyLegalEncyclopediaRules.nameOfTitle],
+    chapter_number: [hardCopyLegalEncyclopediaRules.chapterNumber],
+    name_of_chapter: [hardCopyLegalEncyclopediaRules.nameOfChapter],
+    paragraph: [hardCopyLegalEncyclopediaRules.paragraph]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

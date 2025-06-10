@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { bookChapterRules } from "../../lib/bookChapter";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface BookChapterRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,18 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function BookChapterRules({ activeField }: BookChapterRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    author: [bookChapterRules.authors, bookChapterRules.multipleAuthors, bookChapterRules.bodyAuthors, bookChapterRules.judicialOfficers],
+    chapter_title: [bookChapterRules.chapterTitle],
+    editor: [bookChapterRules.editors, bookChapterRules.multipleAuthors, bookChapterRules.bodyAuthors, bookChapterRules.judicialOfficers],
+    title: [bookChapterRules.title],
+    publisher: [bookChapterRules.publicationDetails.publisher],
+    edition: [bookChapterRules.publicationDetails.editionNumber, bookChapterRules.publicationDetails.revisedEditions],
+    year: [bookChapterRules.publicationDetails.publicationYear],
+    volume: [bookChapterRules.multiVolume],
+    starting_page: [bookChapterRules.startingPage],
+    pinpoint: [bookChapterRules.pinpointReferences]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

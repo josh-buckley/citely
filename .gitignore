@@ -27,3 +27,21 @@ build/
 # System files
 .DS_Store
 Thumbs.db
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.DS_Store
+frontend/*.pem
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/.vercel
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts

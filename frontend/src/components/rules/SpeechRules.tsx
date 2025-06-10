@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { speechRules } from "../../lib/speech";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface SpeechRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,13 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function SpeechRules({ activeField }: SpeechRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    author: [speechRules.authors],
+    title: [speechRules.title],
+    speech_or_lecture: [speechRules.speechDetails.speechOrLecture],
+    institution_forum: [speechRules.speechDetails.institution, speechRules.speechDetails.forum],
+    pinpoint: [speechRules.pinpointReferences, speechRules.url]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];

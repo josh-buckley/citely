@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { bookRules } from "../../lib/books";
+import { bookWithEditorRules } from "../../lib/bookWithEditor";
 import { parseItalics, formatRules, groupRules } from "../../lib/formatters";
 
-interface BookRulesProps {
+interface BookWithEditorRulesProps {
   activeField: string;
 }
 
@@ -13,15 +13,15 @@ interface RuleExample {
   explanation: string;
 }
 
-export function BookRules({ activeField }: BookRulesProps) {
+export function BookWithEditorRules({ activeField }: BookWithEditorRulesProps) {
   const fieldToRulesMap: Record<string, any[]> = {
-    author: [bookRules.authors, bookRules.multipleAuthors, bookRules.bodyAuthors, bookRules.judicialOfficers],
-    title: [bookRules.title],
-    publisher: [bookRules.publicationDetails.publisher],
-    edition: [bookRules.publicationDetails.editionNumber, bookRules.publicationDetails.revisedEditions],
-    year: [bookRules.publicationDetails.publicationYear],
-    pinpoint: [bookRules.pinpointReferences],
-    volume: [bookRules.multiVolume]
+    author: [bookWithEditorRules.authors, bookWithEditorRules.multipleAuthors, bookWithEditorRules.bodyAuthors, bookWithEditorRules.judicialOfficers],
+    title: [bookWithEditorRules.title],
+    editor: [bookWithEditorRules.editors, bookWithEditorRules.multipleAuthors],
+    publisher: [bookWithEditorRules.publicationDetails.publisher],
+    edition: [bookWithEditorRules.publicationDetails.editionNumber, bookWithEditorRules.publicationDetails.revisedEditions],
+    year: [bookWithEditorRules.publicationDetails.publicationYear],
+    pinpoint: [bookWithEditorRules.pinpointReferences]
   };
 
   const ruleSections = fieldToRulesMap[activeField] || [];
